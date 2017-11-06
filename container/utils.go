@@ -6,33 +6,46 @@ import (
 	"fmt"
 )
 
-func copySurceVariableToDestinationVariable(sourceVariable interface{}, destination interface{}, serviceName string) error {
-	dpv := reflect.ValueOf(destination)
-	if dpv.Kind() != reflect.Ptr {
+func copySurceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, serviceName string) error {
+	destinationPointerValue := reflect.ValueOf(destination)
+	if destinationPointerValue.Kind() != reflect.Ptr {
 		return errors.New("must pass a pointer, not a value")
 	}
-	if dpv.IsNil() {
+	if destinationPointerValue.IsNil() {
 		return errors.New("nil pointer passed to destination")
 	}
 
-	sv := reflect.ValueOf(sourceVariable)
+	reflectedCreatedDependency := reflect.ValueOf(createdDependency)
 
-	dv := reflect.Indirect(dpv)
-	dvKind := dv.Kind()
-	svKind := sv.Kind()
-	if dvKind == svKind && sv.Type().ConvertibleTo(dv.Type()) {
-		dv.Set(sv.Convert(dv.Type()))
+	destinationValue := reflect.Indirect(destinationPointerValue)
+
+	if reflectedCreatedDependency.Kind() == reflect.Ptr && sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationPointerValue) {
+		reflectedCreatedDependencyIndirected := reflect.Indirect(reflectedCreatedDependency)
+		destinationValue.Set(reflectedCreatedDependencyIndirected.Convert(destinationValue.Type()))
+		return nil
+	}
+
+	if sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationValue) {
+		destinationValue.Set(reflectedCreatedDependency.Convert(destinationValue.Type()))
 		return nil
 	}
 
 	errStr := fmt.Sprintf(
-		"Cannot convert created value of type '%s' to expected destination value '%s' for sourceVariable declaration %s",
-		sv.Type().Name(),
-		dv.Type().Name(),
+		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s",
+		reflectedCreatedDependency.Type().Name(),
+		destinationValue.Type().Name(),
 		serviceName,
 	)
 
 	return errors.New(errStr)
+}
+
+func sourceCanBeCopiedToDestination(sourceValue, destinationValue reflect.Value) bool {
+	destinationValueKind := destinationValue.Kind()
+	sourceValueKind := sourceValue.Kind()
+	isConvertable := sourceValue.Type().ConvertibleTo(destinationValue.Type())
+
+	return destinationValueKind == sourceValueKind && isConvertable
 }
 
 func isErrorType(reflectedType reflect.Type) bool {

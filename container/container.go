@@ -6,4 +6,5 @@ type Container interface {
 	AddTypedConstructor(id string, typedConstructor interface{}, constructorArgumentNames ...string)
 	GetTypedService(id string, dest interface{})
 	GetService(id string) interface{}
+	Check()
 }

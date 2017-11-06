@@ -14,7 +14,7 @@ func NewRuntimeContainer() *RuntimeContainer {
 	return &RuntimeContainer{make(map[string]ArgumentsConstructor), newServicesCache()}
 }
 
-func (this *RuntimeContainer)AddConstructor(id string, constructor ArgumentsConstructor) {
+func (this *RuntimeContainer) AddConstructor(id string, constructor ArgumentsConstructor) {
 	this.constructors[id] = constructor
 }
 
@@ -56,3 +56,8 @@ func (this *RuntimeContainer) GetService(id string) interface{} {
 	return result
 }
 
+func (this *RuntimeContainer) Check() {
+	for dependencyName, _ := range this.constructors {
+		this.GetService(dependencyName)
+	}
+}
