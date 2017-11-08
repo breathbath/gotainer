@@ -4,6 +4,7 @@ import (
 	"testing"
 	"github.com/breathbath/gotainer/examples"
 	"github.com/breathbath/gotainer/container"
+	"errors"
 )
 
 func TestLazyCollectionDependencies(t *testing.T) {
@@ -13,36 +14,59 @@ func TestLazyCollectionDependencies(t *testing.T) {
 		return map[string]string{"someMapKey": "someMapValue"}, nil
 	})
 
-	cont.AddNoArgumentsConstructor("someMapPointer", func() (interface{}, error){
-		return &map[string]string{"someMapKeyPointer": "someMapPointerValue"}, nil
-	})
-
 	cont.AddNoArgumentsConstructor("someSlice", func() (interface{}, error){
 		return []string{"someSliceValue1", "someSliceValue2"}, nil
 	})
 
-	cont.AddNoArgumentsConstructor("someSlicePointer", func() (interface{}, error){
-		return &[]string{"someSlicePointerValue3", "someSlicePointerValue4"}, nil
-	})
+	AssertStringValueExtracted(
+		"someMapValue",
+		"someMapFetcher",
+		func(c container.Container) (interface{}, error){
+			var mapDependency map[string]string
+			c.GetTypedService("someMap", &mapDependency)
+			return mapDependency["someMapKey"], nil
+		},
+		cont,
+		t,
+	)
 
-	cont.AddConstructor("someMapFetcher", func(c container.Container) (interface{}, error){
-		var mapDependency map[string]string
-		c.GetTypedService("someMap", &mapDependency)
-		return mapDependency["someMapKey"], nil
-	})
+	AssertStringValueExtracted(
+		"someSliceValue2",
+		"someSliceFetcher",
+		func(c container.Container) (interface{}, error){
+			var sliceString []string
+			c.GetTypedService("someSlice", &sliceString)
+			if len(sliceString) < 2 {
+				return "", errors.New("Slice with 2 values is expected for 'someSlice' dependency, but none is returned in 'someSliceFetcher'")
+			}
+			return sliceString[1], nil
+		},
+		cont,
+		t,
+	)
+}
 
-	var result string
-	cont.GetTypedService("someMapFetcher", &result)
+func TestCollectionDependencies(t *testing.T) {
+	cont := examples.CreateContainer()
+	cont.AddTypedConstructor("book_prices", examples.GetBookPrices)
+	cont.AddTypedConstructor("books", examples.GetAllBooks)
+	cont.AddTypedConstructor("price_finder", examples.NewBooksPriceFinder, "book_prices", "books")
 
-	if result != "someMapValue" {
-		t.Errorf("Wrong map fetched from the container for service 'someMapFetcher'", )
+	var priceCalculator func(bookId string) int
+	cont.GetTypedService("price_finder", &priceCalculator)
+
+	expectedResult := 100
+	result := priceCalculator("1")
+	if priceCalculator("1") != expectedResult {
+		t.Errorf("Wrong price calculator result '%d', expected result is '%d'", result, expectedResult)
 	}
 }
 
-func NewBooksAuthorMap() map[string] string {
-	return map[string] string {"Author1" : "Book1", "Author2": "Book2"}
-}
-
-func NewBooksPriceMap() *map[string] int {
-	return &map[string] int {"Book1" : 100, "Author2": 150}
+func AssertStringValueExtracted(expectedString string, extractFuncName string, extractFunc container.ArgumentsConstructor, c container.Container, t *testing.T) {
+	c.AddConstructor(extractFuncName, extractFunc)
+	var result string
+	c.GetTypedService(extractFuncName, &result)
+	if result != expectedString {
+		t.Errorf("Unexpected string '%s' fetched from the container for service '%s'. Expected string was '%s'", result, extractFuncName, expectedString)
+	}
 }
