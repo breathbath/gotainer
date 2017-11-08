@@ -56,15 +56,5 @@ func CreateContainer() container.Container {
 		return 123, nil
 	})
 
-	runtimeContainer.AddConstructor("wrong_book_finder", func(c container.Container) (interface{}, error) {
-		var bc BookCreator
-		c.GetTypedService("wrong_book_creator", &bc)
-
-		var bs BookStorage
-		c.GetTypedService("book_storage", &bs)
-
-		return NewBookFinder(bs, bc), nil
-	})
-
 	return runtimeContainer
 }
