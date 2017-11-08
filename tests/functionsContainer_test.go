@@ -4,7 +4,6 @@ import (
 	"testing"
 	"github.com/breathbath/gotainer/examples"
 	"github.com/breathbath/gotainer/container"
-	"fmt"
 )
 
 func TestFunctionalDependency(t *testing.T) {
@@ -21,7 +20,7 @@ func TestFunctionalDependency(t *testing.T) {
 func AssertPrice(expectedPrice int, bookId string, priceCalculator examples.PriceCalculator, t *testing.T) {
 	receivedPrice := priceCalculator.CalculateBookPrice(bookId)
 	if receivedPrice != expectedPrice {
-		fmt.Errorf(
+		t.Errorf(
 			"Price calculated incorrectly, expected price '%d', provided price '%d', book id '%s'",
 			expectedPrice,
 			receivedPrice,
