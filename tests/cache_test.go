@@ -12,7 +12,7 @@ func TestContainerCache(t *testing.T) {
 
 	c.Scan("book_shelve", &bookShelve)
 
-	bookShelve.Add(examples.Book{"123", "Book1", "Author1"})
+	bookShelve.Add(examples.Book{Id:"123", Title: "Book1", Author: "Author1"})
 
 	var bookShelve2 examples.BookShelve
 
