@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func copySurceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, serviceName string) error {
+func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
 	destinationPointerValue := reflect.ValueOf(destination)
 	if destinationPointerValue.Kind() != reflect.Ptr {
 		return errors.New("must pass a pointer, not a value")
@@ -34,7 +34,7 @@ func copySurceVariableToDestinationVariable(createdDependency interface{}, desti
 		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s",
 		reflectedCreatedDependency.Type().Name(),
 		destinationValue.Type().Name(),
-		serviceName,
+		dependencyName,
 	)
 
 	return errors.New(errStr)

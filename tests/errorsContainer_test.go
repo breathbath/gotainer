@@ -7,27 +7,27 @@ import (
 )
 
 func TestWrongMixedDependenciesInStaticCall(t *testing.T) {
-	defer ExpectPanic("Cannot use the provided service 'book_creator' of type 'examples.BookCreator' as 'examples.BookStorage' in the constructor function call", t)
+	defer ExpectPanic("Cannot use the provided dependency 'book_creator' of type 'examples.BookCreator' as 'examples.BookStorage' in the constructor function call", t)
 
 	cont := examples.CreateContainer()
-	cont.AddTypedConstructor("anotherFinder", examples.NewBookFinder, "book_creator", "book_storage")
+	cont.AddNewMethod("anotherFinder", examples.NewBookFinder, "book_creator", "book_storage")
 
 	var finder examples.BookFinder
-	cont.GetTypedService("anotherFinder", &finder)
+	cont.Scan("anotherFinder", &finder)
 }
 
 func TestWrongDependencyRequested(t *testing.T) {
-	defer ExpectPanic("Unknown service 'lala'", t)
+	defer ExpectPanic("Unknown dependency 'lala'", t)
 	cont := examples.CreateContainer()
 
-	cont.GetTypedService("lala", nil)
+	cont.Scan("lala", nil)
 }
 
 func TestIncompatibleInterfaces(t *testing.T) {
-	defer ExpectPanic("Cannot use the provided service 'incompatible_cache' of type 'examples.IncompatibleCache' as 'examples.Cache' in the constructor function call", t)
+	defer ExpectPanic("Cannot use the provided dependency 'incompatible_cache' of type 'examples.IncompatibleCache' as 'examples.Cache' in the constructor function call", t)
 	cont := examples.CreateContainer()
-	cont.AddTypedConstructor("incompatible_cache", examples.NewIncompatibleCache)
-	cont.AddTypedConstructor(
+	cont.AddNewMethod("incompatible_cache", examples.NewIncompatibleCache)
+	cont.AddNewMethod(
 		"wrong_downloader",
 		examples.NewBookDownloader,
 		"incompatible_cache",
@@ -36,7 +36,7 @@ func TestIncompatibleInterfaces(t *testing.T) {
 		"web_fetcher",
 	)
 
-	cont.GetTypedService("incompatible_cache", nil)
+	cont.Scan("incompatible_cache", nil)
 }
 
 func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
@@ -44,10 +44,10 @@ func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
 	cont := examples.CreateContainer()
 	cont.AddConstructor("wrong_book_finder", func(c container.Container) (interface{}, error) {
 		var bc examples.BookCreator
-		c.GetTypedService("wrong_book_creator", &bc)
+		c.Scan("wrong_book_creator", &bc)
 
 		var bs examples.BookStorage
-		c.GetTypedService("book_storage", &bs)
+		c.Scan("book_storage", &bs)
 
 		return examples.NewBookFinder(bs, bc), nil
 	})

@@ -9,13 +9,13 @@ func TestAllPresetDefinitions(t *testing.T) {
 	cont := examples.CreateContainer()
 
 	var bc examples.BookCreator
-	cont.GetTypedService("book_creator", &bc)
+	cont.Scan("book_creator", &bc)
 
 	var bs examples.BookStorage
-	cont.GetTypedService("book_storage", &bs)
+	cont.Scan("book_storage", &bs)
 
 	var finder examples.BookFinder
-	cont.GetTypedService("book_finder", &finder)
+	cont.Scan("book_finder", &finder)
 
 	book, result := finder.FindBook("one")
 	if !result || book.Title != "FirstBook" || book.Author != "FirstAuthor" || book.Id != "One" {
@@ -25,7 +25,7 @@ func TestAllPresetDefinitions(t *testing.T) {
 	}
 
 	var staticFinder examples.BookFinder
-	cont.GetTypedService("book_finder_declared_statically", &staticFinder)
+	cont.Scan("book_finder_declared_statically", &staticFinder)
 
 	book, result = finder.FindBook("two")
 	if !result || book.Title != "SecondBook" || book.Author != "FirstAuthor" || book.Id != "Two" {
@@ -38,7 +38,7 @@ func TestAllPresetDefinitions(t *testing.T) {
 func TestStaticParameterDependency(t *testing.T) {
 	container := examples.CreateContainer()
 	var bookLinkProvider examples.BookLinkProvider
-	container.GetTypedService("book_link_provider", &bookLinkProvider)
+	container.Scan("book_link_provider", &bookLinkProvider)
 
 	url := bookLinkProvider.GetLink("one")
 	expectedUrl := "http://static.me/FirstBook"
@@ -54,7 +54,7 @@ func TestStaticParameterDependency(t *testing.T) {
 func TestPointerAndInterfaceDependencies(t *testing.T) {
 	var bookDownloader examples.BookDownloader
 	container := examples.CreateContainer()
-	container.GetTypedService("book_downloader", &bookDownloader)
+	container.Scan("book_downloader", &bookDownloader)
 
 	fetchedContent := bookDownloader.DownloadBook("two")
 	expectedFetchedContentd := "Fetched from http://static.me/SecondBook"

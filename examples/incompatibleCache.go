@@ -6,6 +6,6 @@ func NewIncompatibleCache() IncompatibleCache {
 	return IncompatibleCache{}
 }
 
-func (cacheService IncompatibleCache) Cache(book Book) bool {
+func (dependencyCache IncompatibleCache) Cache(book Book) bool {
 	return false
 }

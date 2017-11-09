@@ -50,16 +50,19 @@ func assertFunctionReturnValues(reflectedConstructorFunc reflect.Value) {
 	}
 }
 
-func assertConstructorArgumentsAreCompatible(reflectedConstructorArgument reflect.Type, reflectedCorrespondingServiceFromContainer reflect.Value, correspondingServiceName string) {
-	if reflectedConstructorArgument.Kind() == reflect.Interface && reflectedCorrespondingServiceFromContainer.Type().Implements(reflectedConstructorArgument) {
+func assertConstructorArgumentsAreCompatible(
+	reflectedConstructorArgument reflect.Type,
+	reflectedContainerDependency reflect.Value,
+	dependencyName string) {
+	if reflectedConstructorArgument.Kind() == reflect.Interface && reflectedContainerDependency.Type().Implements(reflectedConstructorArgument) {
 		return
 	}
-	if reflectedConstructorArgument.Kind() != reflectedCorrespondingServiceFromContainer.Kind() ||
-		!reflectedConstructorArgument.ConvertibleTo(reflectedCorrespondingServiceFromContainer.Type()) {
+	if reflectedConstructorArgument.Kind() != reflectedContainerDependency.Kind() ||
+		!reflectedConstructorArgument.ConvertibleTo(reflectedContainerDependency.Type()) {
 		errName := fmt.Sprintf(
-			"Cannot use the provided service '%s' of type '%s' as '%s' in the constructor function call",
-			correspondingServiceName,
-			reflectedCorrespondingServiceFromContainer.Type(),
+			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the constructor function call",
+			dependencyName,
+			reflectedContainerDependency.Type(),
 			reflectedConstructorArgument,
 		)
 		panic(errors.New(errName))

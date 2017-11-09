@@ -8,6 +8,6 @@ func NewInMemoryCache() *InMemoryCache {
 	return &InMemoryCache{make(map[string]Book)}
 }
 
-func (cacheService *InMemoryCache) Cache(book Book) {
-	cacheService.cache[book.Id] = book
+func (dependencyCache *InMemoryCache) Cache(book Book) {
+	dependencyCache.cache[book.Id] = book
 }

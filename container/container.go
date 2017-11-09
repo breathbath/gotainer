@@ -1,10 +1,10 @@
 package container
 
 type Container interface {
-	AddNoArgumentsConstructor(id string, constructor NoArgumentsConstructor)
-	AddConstructor(id string, constructor ArgumentsConstructor)
-	AddTypedConstructor(id string, typedConstructor interface{}, constructorArgumentNames ...string)
-	GetTypedService(id string, dest interface{})
-	GetService(id string) interface{}
+	AddConstructor(id string, constructor Constructor)
+	AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string)
+	Scan(id string, dest interface{})
+	ScanNonCached(id string, dest interface{})
+	Get(id string, isCached bool) interface{}
 	Check()
 }

@@ -10,11 +10,11 @@ import (
 func TestLazyCollectionDependencies(t *testing.T) {
 	cont := examples.CreateContainer()
 
-	cont.AddNoArgumentsConstructor("someMap", func() (interface{}, error){
+	cont.AddConstructor("someMap", func(c container.Container) (interface{}, error){
 		return map[string]string{"someMapKey": "someMapValue"}, nil
 	})
 
-	cont.AddNoArgumentsConstructor("someSlice", func() (interface{}, error){
+	cont.AddConstructor("someSlice", func(c container.Container) (interface{}, error){
 		return []string{"someSliceValue1", "someSliceValue2"}, nil
 	})
 
@@ -23,7 +23,7 @@ func TestLazyCollectionDependencies(t *testing.T) {
 		"someMapFetcher",
 		func(c container.Container) (interface{}, error){
 			var mapDependency map[string]string
-			c.GetTypedService("someMap", &mapDependency)
+			c.Scan("someMap", &mapDependency)
 			return mapDependency["someMapKey"], nil
 		},
 		cont,
@@ -35,7 +35,7 @@ func TestLazyCollectionDependencies(t *testing.T) {
 		"someSliceFetcher",
 		func(c container.Container) (interface{}, error){
 			var sliceString []string
-			c.GetTypedService("someSlice", &sliceString)
+			c.Scan("someSlice", &sliceString)
 			if len(sliceString) < 2 {
 				return "", errors.New("Slice with 2 values is expected for 'someSlice' dependency, but none is returned in 'someSliceFetcher'")
 			}
@@ -48,12 +48,12 @@ func TestLazyCollectionDependencies(t *testing.T) {
 
 func TestCollectionDependencies(t *testing.T) {
 	cont := examples.CreateContainer()
-	cont.AddTypedConstructor("book_prices", examples.GetBookPrices)
-	cont.AddTypedConstructor("books", examples.GetAllBooks)
-	cont.AddTypedConstructor("price_finder", examples.NewBooksPriceFinder, "book_prices", "books")
+	cont.AddNewMethod("book_prices", examples.GetBookPrices)
+	cont.AddNewMethod("books", examples.GetAllBooks)
+	cont.AddNewMethod("price_finder", examples.NewBooksPriceFinder, "book_prices", "books")
 
 	var priceCalculator func(bookId string) int
-	cont.GetTypedService("price_finder", &priceCalculator)
+	cont.Scan("price_finder", &priceCalculator)
 
 	expectedResult := 100
 	result := priceCalculator("1")
@@ -62,11 +62,11 @@ func TestCollectionDependencies(t *testing.T) {
 	}
 }
 
-func AssertStringValueExtracted(expectedString string, extractFuncName string, extractFunc container.ArgumentsConstructor, c container.Container, t *testing.T) {
+func AssertStringValueExtracted(expectedString string, extractFuncName string, extractFunc container.Constructor, c container.Container, t *testing.T) {
 	c.AddConstructor(extractFuncName, extractFunc)
 	var result string
-	c.GetTypedService(extractFuncName, &result)
+	c.Scan(extractFuncName, &result)
 	if result != expectedString {
-		t.Errorf("Unexpected string '%s' fetched from the container for service '%s'. Expected string was '%s'", result, extractFuncName, expectedString)
+		t.Errorf("Unexpected string '%s' fetched from the container for dependency '%s'. Expected string was '%s'", result, extractFuncName, expectedString)
 	}
 }
