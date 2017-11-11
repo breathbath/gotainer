@@ -27,6 +27,31 @@ func convertNewMethodToConstructor(container Container, newMethod interface{}, n
 	}
 }
 
+/**
+converts something like func(observer Observer, dependency Dependency) which is customObserverResolver to func(observer interface{}, dependency interface{}) which is dependencyNotifier
+as customObserverResolver can be anything we need to make sure that function
+ */
+func convertCustomObserverResolverToDependencyNotifier(customObserverResolver interface{}, eventName, observerId string) dependencyNotifier {
+	reflectedCustomObserverResolver := reflect.ValueOf(customObserverResolver)
+	assertIsFunction(reflectedCustomObserverResolver)
+	assertArgumentsCount(reflectedCustomObserverResolver, 2)
+	return func(observer interface{}, dependency interface{}) {
+		argumentsToCallCustomerObserverResolver := make([]reflect.Value, 2)
+
+		reflectedObserver := reflect.ValueOf(observer)
+		reflectedFirstResolverArgument := reflectedCustomObserverResolver.Type().In(0)
+		assertConstructorArgumentsAreCompatible(reflectedFirstResolverArgument, reflectedObserver, observerId)
+		argumentsToCallCustomerObserverResolver[0] = reflectedObserver
+
+		reflectedDependency := reflect.ValueOf(dependency)
+		reflectedSecondResolverArgument := reflectedCustomObserverResolver.Type().In(1)
+		assertConstructorArgumentsAreCompatible(reflectedSecondResolverArgument, reflectedDependency, eventName)
+		argumentsToCallCustomerObserverResolver[1] = reflectedDependency
+
+		reflectedCustomObserverResolver.Call(argumentsToCallCustomerObserverResolver)
+	}
+}
+
 func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container) []reflect.Value {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
@@ -36,10 +61,10 @@ func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgume
 
 		dependencyName := newMethodArgumentNames[i]
 		dependencyFromContainer := container.Get(dependencyName, true)
-		reflectedDepdendencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
 
-		assertConstructorArgumentsAreCompatible(reflectedNewMethodArgument, reflectedDepdendencyFromContainer, dependencyName)
-		argumentsToCallNewMethod[i] = reflectedDepdendencyFromContainer
+		assertConstructorArgumentsAreCompatible(reflectedNewMethodArgument, reflectedDependencyFromContainer, dependencyName)
+		argumentsToCallNewMethod[i] = reflectedDependencyFromContainer
 	}
 
 	return argumentsToCallNewMethod

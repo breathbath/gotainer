@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-func assertFunctionDeclaredAsConstructor(reflectedConstructorFunc reflect.Value, constructorArgumentNames []string) {
+func assertIsFunction(reflectedConstructorFunc reflect.Value) {
 	if reflectedConstructorFunc.Kind() != reflect.Func {
 		errName := fmt.Sprintf(
 			"Destination object should be a constructor function rather than %s",
@@ -14,17 +14,23 @@ func assertFunctionDeclaredAsConstructor(reflectedConstructorFunc reflect.Value,
 		)
 		panic(errors.New(errName))
 	}
+}
 
-	constructorInputCount := reflectedConstructorFunc.Type().NumIn()
-
-	if constructorInputCount != len(constructorArgumentNames) {
+func assertArgumentsCount(reflectedConstructorFunc reflect.Value, expectedArgNumbersCount int) {
+	argsInputCount := reflectedConstructorFunc.Type().NumIn()
+	if argsInputCount != expectedArgNumbersCount {
 		errName := fmt.Sprintf(
-			"The constructor function requires %d dependencies, but %d argument names are provided",
-			constructorInputCount,
-			len(constructorArgumentNames),
+			"The function requires %d dependencies, but %d arguments are provided",
+			argsInputCount,
+			expectedArgNumbersCount,
 		)
 		panic(errors.New(errName))
 	}
+}
+
+func assertFunctionDeclaredAsConstructor(reflectedConstructorFunc reflect.Value, constructorArgumentNames []string) {
+	assertIsFunction(reflectedConstructorFunc)
+	assertArgumentsCount(reflectedConstructorFunc, len(constructorArgumentNames))
 }
 
 func assertFunctionReturnValues(reflectedConstructorFunc reflect.Value) {

@@ -24,6 +24,7 @@ func CreateContainer() container.Container {
 		c.Scan("db", &db)
 		return NewBookStorage(db), nil
 	})
+	runtimeContainer.RegisterDependencyEvent("statistics_provider", "book_storage")
 
 	runtimeContainer.AddConstructor("book_finder", func(c container.Container) (interface{}, error) {
 		var bc BookCreator
@@ -57,6 +58,15 @@ func CreateContainer() container.Container {
 	})
 
 	runtimeContainer.AddNewMethod("book_shelve", NewBookShelve)
+
+	runtimeContainer.AddNewMethod("authors_storage", NewAuthorsStorage, "db")
+	runtimeContainer.RegisterDependencyEvent("statistics_provider", "authors_storage")
+
+	runtimeContainer.AddNewMethod("statistics_gateway", NewStatisticsGateway)
+
+	runtimeContainer.AddDependencyObserver("statistics_provider", "statistics_gateway", func(sg *StatisticsGateway, sp StatisticsProvider){
+		sg.AddStatisticsProvider(sp)
+	})
 
 	return runtimeContainer
 }

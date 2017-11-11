@@ -22,6 +22,11 @@ func NewFakeDb(connectionString string) FakeDb {
 			"one": "One;FirstBook;FirstAuthor",
 			"two": "Two;SecondBook;FirstAuthor",
 		},
+		"authors": {
+			"1a": "FirstAuthor",
+			"2a": "SecondAuthor",
+			"3a": "ThirdAuthor",
+		},
 	}}
 }
 
@@ -34,4 +39,12 @@ func (fdb FakeDb) FindInTable(tableName, id string) (string, bool) {
 	}
 
 	return bookName, found
+}
+
+func (fdb FakeDb) CountItems(tableName string) (int) {
+	tableData, found := fdb.data[tableName]
+	if found {
+		return len(tableData)
+	}
+	return 0
 }

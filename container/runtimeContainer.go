@@ -8,10 +8,11 @@ import (
 type RuntimeContainer struct {
 	constructors map[string]Constructor
 	cache        dependencyCache
+	eventsContainer *EventsContainer
 }
 
 func NewRuntimeContainer() *RuntimeContainer {
-	return &RuntimeContainer{make(map[string]Constructor), newDependencyCache()}
+	return &RuntimeContainer{constructors: make(map[string]Constructor), cache: newDependencyCache(), eventsContainer: NewEventsContainer()}
 }
 
 func (this *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
@@ -20,6 +21,14 @@ func (this *RuntimeContainer) AddConstructor(id string, constructor Constructor)
 
 func (this *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
 	this.constructors[id] = convertNewMethodToConstructor(this, typedConstructor, constructorArgumentNames)
+}
+
+func (this *RuntimeContainer) AddDependencyObserver(eventName, observerId string, observer interface{}) {
+	this.eventsContainer.addDependencyObserver(eventName, observerId, observer)
+}
+
+func (this *RuntimeContainer) RegisterDependencyEvent(eventName, dependencyName string) {
+	this.eventsContainer.registerDependencyEvent(eventName, dependencyName)
 }
 
 func (this *RuntimeContainer) Scan(id string, dest interface{}) {
@@ -54,6 +63,8 @@ func (this *RuntimeContainer) Get(id string, isCached bool) interface{} {
 	if err != nil {
 		panic(err)
 	}
+
+	this.eventsContainer.notifyObserverAboutDependency(*this, id, result)
 
 	this.cache.Set(id, result)
 
