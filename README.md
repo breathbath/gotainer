@@ -8,6 +8,53 @@
 
 This library helps to manage dependencies in your project by providing a centralised logic for initialising services.
 
+You can define any go lang type as a service - a struct, a function (closure or lambda), a scalar value or a dynamic result of your
+functions. You do it in a simple manner: you create a container instance and add your services to it under an unique alias.
+Further on you can fetch them by this key in any part of your application.
+
+# How to install
+
+        go get github.com/breathbath/gotainer
+
+If you use [Go dep tool](https://github.com/golang/dep):
+
+        //1. Add it to your dependencies file
+        dep ensure -add github.com/breathbath/gotainer
+
+        //2. Use container somewhere in the code (e.g. declare some dependencies)
+
+        //3. Fix the result
+        dep ensure
+
+# Quick start
+
+## Declaring services
+
+        //first we create a container
+        container := container.NewRuntimeContainer()
+
+        //then we declare a callback that will return MyService instance identified by "my_service"
+        runtimeContainer.AddConstructor("my_service", func(c container.Container) (interface{}, error){
+            return MyService{}, nil
+        })
+
+If you already have a constructor function, you can add it to the container as well:
+
+        func NewMyService() MyService {
+            return MyService{}
+        }
+
+        runtimeContainer.AddNewMethod("my_service", NewMyService)
+
+## Fetching services
+Assuming that you already created a container and declared all needed services, you can start fetching them:
+
+        var myService MyService
+        container.Scan("my_service", &myService)
+        //at this point myService will contain the initialised instance of MyService, which was either created by
+        //the provided callback constructor or by your custom New function
+        myService.SomeMethod()
+
 # Use cases
 
 The library covers the following use cases:
@@ -166,6 +213,130 @@ This has following advantages:
 
 3. Concrete implementations of MonitoringProvider are created once without any repetition as this logic is already encapsulated in the Gotainer.
 
-4. You might have the container declaration for your MonitoringGateway in one core library package and different implementations of
+4. You might have the container declaration for your MonitoringGateway in one core library and different implementations of
 MonitoringProvider in other packages, so you are able to plug them in individually in every application with no need to change the
-core package.
+core code.
+
+
+# Good practices
+
+## Creating a dependency container
+
+1. Declare a function that will be responsible for the container creation, e.g.
+
+        package app_container
+
+        func NewAppContainer() RuntimeContainer {
+            container := container.NewRuntimeContainer()
+
+            //services declarations here...
+
+            return container
+        }
+
+If your application has other libraries that use the container, you can merge all dependency declarations into one.
+If your application is very big, you can declare small containers for your packages merge them in your main container method.
+
+        package app_container
+
+        import other_library_container "github.com/myname/other_library/container"
+
+        func NewAppContainer() RuntimeContainer {
+            container := container.NewRuntimeContainer()
+
+            //services declarations here...
+
+            otherLibraryContainer := other_library_container.NewAppContainer()
+            container.Merge(otherLibraryContainer)
+
+            return container
+        }
+
+Don't put container init logic into your main.go file as it might grow very big and will not be reusable.
+
+2. Add services declarations in the container init method:
+
+        package app_container
+
+        func NewAppContainer() RuntimeContainer {
+            container := container.NewRuntimeContainer()
+
+           runtimeContainer.AddNewMethod("service_1", NewService1)
+           runtimeContainer.AddNewMethod("service_2", NewService2, "service_1")
+           runtimeContainer.AddNewMethod("service_3", NewService2, "service_1", "service_2")
+
+            return container
+        }
+
+3. If you have services with optional dependencies, declare them via callbacks:
+
+        //...
+        runtimeContainer.AddConstructor("service_a", func(c container.Container) (interface{}, error) {
+            var logger Logger
+            c.Scan("logger", &logger)
+
+            myService := MyService{}
+            myService.SetLogger(logger)
+
+            return myService
+        })
+        //...
+
+4. Don't declare container as a dependency for a service.
+
+        type MyType struct {
+            container Container
+        }
+
+
+Generally it's a bad practise for the following reasons:
+
+- Unit testing of such services will be cumbersome as you would need to mock an undefined amount of dependencies,
+that your code might require from the container
+
+- Dependencies for your service will be hidden inside, so its public interface will be less obvious for understanding
+
+- You couple your code with the container library, which may produce an overhead in it's usage in other applications or projects
+
+- You run the risk of producing circular dependencies (e.g., your service asks the container for a dependency which requires your service)
+
+## Fetching services
+
+1. Fetch your services only in the main.go method.
+
+       package main
+
+       func main() {
+            container := NewAppContainer()
+
+            var interactor SomeInteractor
+            container.Scan("interactor", &interactor)
+
+            interactor.DoSomething()
+       }
+
+2. Don't pass container as a dependency to your business logic, only your controllers should communicate to it.
+
+3. Use "scan" methods to get typed services. Don't forget to use pointer types in the destination argument (otherwise there will be a panic error).
+You can use interface return types and type assertions as well like this:
+
+       package main
+
+       func main() {
+            container := NewAppContainer()
+
+            interactor := container.Get("interactor").(Interactor)
+
+            interactor.DoSomething()
+       }
+
+## Testing
+
+1. Working with "RuntimeContainer" means that possible errors in a service declaration won't appear until you fetch it from the container.
+To make sure, that your declared container has valid service definitions, you should run the "Check" method. You
+do it in an integration test as:
+
+        func TestContainer(t *testing.T) {
+            container := NewAppContainer()
+            container.Check()
+        }
