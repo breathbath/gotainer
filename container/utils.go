@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+//copySourceVariableToDestinationVariable copies a dependency fetched from the container
+//to the pointer reference provided as dest in Scan or ScanNonCached of the container
 func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
 	destinationPointerValue := reflect.ValueOf(destination)
 	if destinationPointerValue.Kind() != reflect.Ptr {
@@ -40,6 +42,7 @@ func copySourceVariableToDestinationVariable(createdDependency interface{}, dest
 	return errors.New(errStr)
 }
 
+//sourceCanBeCopiedToDestination validates if we can copy the value received from the container to the defined dest pointer
 func sourceCanBeCopiedToDestination(sourceValue, destinationValue reflect.Value) bool {
 	destinationValueKind := destinationValue.Kind()
 	sourceValueKind := sourceValue.Kind()

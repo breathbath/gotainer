@@ -1,5 +1,6 @@
 package container
 
+//dependencyCache is a in-memory cache for all declared services
 type dependencyCache map[string]interface{}
 
 func newDependencyCache() dependencyCache {

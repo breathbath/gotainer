@@ -2,6 +2,13 @@ package container
 
 import "reflect"
 
+//convertNewMethodToConstructor creates a callback that will call a New method of a service with the dependencies
+//declared as newMethodArgumentNames.
+//Suppose we have func NewServiceA(sb ServiceB, sc ServiceC) ServiceA, if you call
+//convertNewMethodToConstructor(container, NewServiceA, "service_b", "service_c"), you will get a callback that will:
+//a) fetch "service_b" and "service_c" from the container
+//b) validate if type of "service_b" and "service_c" is convertable to the NewServiceA arguments
+//c) call NewServiceA with the results of container.Get("service_b") and container.Get("service_c")
 func convertNewMethodToConstructor(container Container, newMethod interface{}, newMethodArgumentNames []string) Constructor {
 	reflectedNewMethod := reflect.ValueOf(newMethod)
 
@@ -27,10 +34,10 @@ func convertNewMethodToConstructor(container Container, newMethod interface{}, n
 	}
 }
 
-/**
-converts something like func(observer Observer, dependency Dependency) which is customObserverResolver to func(observer interface{}, dependency interface{}) which is dependencyNotifier
-as customObserverResolver can be anything we need to make sure that function
- */
+
+//convertCustomObserverResolverToDependencyNotifier converts something like func(observer Observer, dependency Dependency)
+// which is customObserverResolver to func(observer interface{}, dependency interface{}) which is dependencyNotifier
+//as customObserverResolver can be anything we need to make sure that function
 func convertCustomObserverResolverToDependencyNotifier(customObserverResolver interface{}, eventName, observerId string) dependencyNotifier {
 	reflectedCustomObserverResolver := reflect.ValueOf(customObserverResolver)
 	assertIsFunction(reflectedCustomObserverResolver)
@@ -52,6 +59,8 @@ func convertCustomObserverResolverToDependencyNotifier(customObserverResolver in
 	}
 }
 
+//getValidFunctionArguments fetches dependencies by ids defined in newMethodArgumentNames and validates if they are convertable
+//to arguments of reflectedNewMethod which is a New method of a service provided in the AddNewMethod of the container
 func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container) []reflect.Value {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)

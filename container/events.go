@@ -1,7 +1,11 @@
 package container
 
+//dependencyNotifier is a function that receives observer as a service interested in a dependency
+//received in the second argument so you can call it as observer.SetSomeDependency(dependency)
 type dependencyNotifier func(observer interface{}, dependency interface{})
 
+//EventsContainer contains all observer, events and dependencies declarations, that you might
+//add in your container
 type EventsContainer struct {
 	dependencyEvents    map[string][]string
 	dependencyObservers map[string]map[string]dependencyNotifier
@@ -14,6 +18,7 @@ func NewEventsContainer() *EventsContainer {
 	}
 }
 
+//registerDependencyEvent triggers an event about adding a concrete dependency to the container
 func (this *EventsContainer) registerDependencyEvent(eventName, dependencyName string) {
 	if this.dependencyEvents[eventName] == nil {
 		this.dependencyEvents[eventName] = []string{}
@@ -21,6 +26,7 @@ func (this *EventsContainer) registerDependencyEvent(eventName, dependencyName s
 	this.dependencyEvents[eventName] = append(this.dependencyEvents[eventName], dependencyName)
 }
 
+//addDependencyObserver adds the service (observer) which will receive dependencies added by known events
 func (this *EventsContainer) addDependencyObserver(eventName, observerId string, observerResolver interface{}) {
 	if this.dependencyObservers[observerId] == nil {
 		this.dependencyObservers[observerId] = map[string]dependencyNotifier{}
@@ -32,6 +38,7 @@ func (this *EventsContainer) addDependencyObserver(eventName, observerId string,
 	)
 }
 
+//notifyObserverAboutDependency we call observer methods with all the dependencies that it's interested in
 func (this *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, observerId string, observer interface{}) {
 	eventObservers, eventObserverFound := this.dependencyObservers[observerId]
 	if !eventObserverFound {
@@ -51,6 +58,7 @@ func (this *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, o
 	}
 }
 
+//merge helps to accumulate event collections when we try to merge containers
 func (this *EventsContainer) merge(ec EventsContainer) {
 	for ecKey, events := range ec.dependencyEvents {
 		for _, dependencyName := range events {

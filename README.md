@@ -1,7 +1,8 @@
 # Dependencies injection tool for go driven projects
 
-This library helps to manage dependencies in your project by providing a centralised and reusable logic for
-creating and initialising your services that require other services or scalar parameters.
+[![Travis Status for Breathbath/gotainer](https://api.travis-ci.org/breathbath/gotainer.svg?branch=master&label=linux+build)](https://travis-ci.org/breathbath/gotainer)
+
+This library helps to manage dependencies in your project by providing a centralised logic for initialising services.
 
 # Use cases
 
@@ -9,9 +10,8 @@ The library covers the following use cases:
 
 ## Reusable services with dependencies
 
-In this case we want to have ServiceA available for both ServiceB and ServiceC, it's also important to have ServiceA
-only once created as it's probably holds some internal state (e.g. a db connection), that should be reused in both
-other services:
+Imagine we have 2 services dependant on an another one, which should be reused in both cases. The common service
+should be initialised only once as it has an internal state (e.g., db connection).
 
         //simple service with no dependencies
         type ServiceA struct {}
@@ -78,7 +78,7 @@ other services:
             return config.GetValue("static_url"), nil
         })
 
-## Explicitly non-cached services
+## Explicitly non cached services
 
 Sometimes we want to recreate a service every time we fetch it:
 
@@ -160,8 +160,7 @@ This has following advantages:
 
 2. No complex initialisation function for MonitoringGateway is needed
 
-3. Concrete implementations of MonitoringProvider(s) are intialised once and their creation and initialisation is not
-repeated as this logic is already encapsulated in the Gotainer.
+3. Concrete implementations of MonitoringProvider are created once without any repetition as this logic is already encapsulated in the Gotainer.
 
 4. You might have the container declaration for your MonitoringGateway in one core library package and different implementations of
 MonitoringProvider in other packages, so you are able to plug them in individually in every application with no need to change the

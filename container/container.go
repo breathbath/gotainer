@@ -1,5 +1,6 @@
 package container
 
+//Container main interface for registering and fetching services
 type Container interface {
 	AddConstructor(id string, constructor Constructor)
 	AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string)
@@ -9,6 +10,7 @@ type Container interface {
 	Check()
 }
 
+//MergeableContainer containers that support merging
 type MergeableContainer interface {
 	Merge(c MergeableContainer)
 	getConstructors() map[string]Constructor
