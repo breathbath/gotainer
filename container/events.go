@@ -48,6 +48,19 @@ func (this *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, o
 			dependency := c.Get(dependencyName, true)
 			dependencyObserver(observer, dependency)
 		}
+	}
+}
 
+func (this *EventsContainer) merge(ec EventsContainer) {
+	for ecKey, events := range ec.dependencyEvents {
+		for _, dependencyName := range events {
+			this.dependencyEvents[ecKey] = append(this.dependencyEvents[ecKey], dependencyName)
+		}
+	}
+
+	for observerId, dependencyNotifiers := range ec.dependencyObservers {
+		for eventName, dependencyNotifier := range dependencyNotifiers {
+			this.dependencyObservers[observerId][eventName] = dependencyNotifier
+		}
 	}
 }

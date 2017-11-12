@@ -6,8 +6,8 @@ import (
 )
 
 type RuntimeContainer struct {
-	constructors map[string]Constructor
-	cache        dependencyCache
+	constructors    map[string]Constructor
+	cache           dependencyCache
 	eventsContainer *EventsContainer
 }
 
@@ -75,4 +75,28 @@ func (this *RuntimeContainer) Check() {
 	for dependencyName, _ := range this.constructors {
 		this.Get(dependencyName, false)
 	}
+}
+
+func (this *RuntimeContainer) Merge(c MergeableContainer) {
+	for keyConstructor, constr := range c.getConstructors() {
+		this.constructors[keyConstructor] = constr
+	}
+
+	for keyCache, cache := range c.getCache() {
+		this.cache[keyCache] = cache
+	}
+
+	this.eventsContainer.merge(c.getEventsContainer())
+}
+
+func (this *RuntimeContainer) getConstructors() map[string]Constructor {
+	return this.constructors
+}
+
+func (this *RuntimeContainer) getCache() dependencyCache {
+	return this.cache
+}
+
+func (this *RuntimeContainer) getEventsContainer() EventsContainer {
+	return *this.eventsContainer
 }

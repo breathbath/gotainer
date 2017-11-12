@@ -8,3 +8,10 @@ type Container interface {
 	Get(id string, isCached bool) interface{}
 	Check()
 }
+
+type MergeableContainer interface {
+	Merge(c MergeableContainer)
+	getConstructors() map[string]Constructor
+	getCache() dependencyCache
+	getEventsContainer() EventsContainer
+}
