@@ -10,9 +10,15 @@ go:
   - 1.9
   - tip
 
+before_install:
+  - go get -t -v ./...
+
 script:
  - go vet $(go list ./... | grep -v /vendor/)
- - go test -v -race ./...
+ - go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 notifications:
   email: false
