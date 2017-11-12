@@ -1,6 +1,6 @@
 package examples
 
-//Simulates books downloading from a url
+//BookDownloader simulates books downloading from a url
 type BookDownloader struct {
 	cache            Cache
 	boolLinkProvider BookLinkProvider
@@ -9,12 +9,12 @@ type BookDownloader struct {
 	webFetcher       *WebFetcher
 }
 
-//Main constructor
+//NewBookDownloader constructor for BookDownloader
 func NewBookDownloader(cache Cache, boolLinkProvider BookLinkProvider, bookFinder BookFinder, webFetcher *WebFetcher) *BookDownloader {
 	return &BookDownloader{cache, boolLinkProvider, bookFinder, 0, webFetcher}
 }
 
-//Downloads a book by id
+//DownloadBook get a book by id
 func (d *BookDownloader) DownloadBook(id string) string {
 	book, _ := d.bookFinder.FindBook(id)
 	link := d.boolLinkProvider.GetLink(id)

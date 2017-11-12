@@ -6,12 +6,12 @@ type BookFinder struct {
 	BookCreator BookCreator
 }
 
-//Constructor
+//NewBookFinder constructor for BookFinder
 func NewBookFinder(storage BookStorage, bookCreator BookCreator) BookFinder {
 	return BookFinder{storage, bookCreator}
 }
 
-//Finds a book by id
+//FindBook get a book by id
 func (bc BookFinder) FindBook(id string) (Book, bool) {
 	bookData, found := bc.Storage.FindBookData(id)
 	if !found {

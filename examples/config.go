@@ -6,7 +6,7 @@ type Config struct {
 	staticFilesUrl         string
 }
 
-//Constructor
+//NewConfig Config Constructor
 func NewConfig() Config {
 	return Config{"someConnectionString", "http://static.me/"}
 }

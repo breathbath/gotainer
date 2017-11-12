@@ -82,7 +82,7 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 //Check ensures that all runtime dependencies are created correctly
 func (rc *RuntimeContainer) Check() {
-	for dependencyName, _ := range rc.constructors {
+	for dependencyName := range rc.constructors {
 		rc.Get(dependencyName, false)
 	}
 }

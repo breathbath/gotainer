@@ -2,13 +2,13 @@ package examples
 
 import "fmt"
 
-//Mock for simulating a db engine
+//FakeDb mock for simulating a db engine
 type FakeDb struct {
 	data             map[string]map[string]string
 	connectionString string
 }
 
-//Main constructor
+//FakeDb main constructor
 func NewFakeDb(connectionString string) FakeDb {
 	//to make sure that a correct value is provided from the config
 	if connectionString != "someConnectionString" {

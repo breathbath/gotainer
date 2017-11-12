@@ -1,8 +1,9 @@
 package examples
 
+//Simulates downloading of a data from a url
 type WebFetcher struct{}
 
-//Simulates downloading of a data from a url
+//NewWebFetcher constructor for WebFetcher
 func NewWebFetcher() *WebFetcher {
 	return &WebFetcher{}
 }

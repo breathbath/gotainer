@@ -5,17 +5,17 @@ type BookShelve struct {
 	books []Book
 }
 
-//Main constructor
+//NewBookShelve BookShelve constructor
 func NewBookShelve() *BookShelve {
 	return &BookShelve{[]Book{}}
 }
 
-//Adding a book to collection
+//Add a book to collection
 func (bs *BookShelve) Add(book Book) {
 	bs.books = append(bs.books, book)
 }
 
-//Returns all books
+//GetBooks returns all books
 func (bs *BookShelve) GetBooks() []Book {
 	return bs.books
 }

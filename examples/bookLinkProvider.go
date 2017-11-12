@@ -6,7 +6,7 @@ type BookLinkProvider struct {
 	bookFinder  BookFinder
 }
 
-//Main constructor
+//NewBookLinkProvider BookLinkProvider constructor
 func NewBookLinkProvider(downloadUrl string, bookFinder BookFinder) BookLinkProvider {
 	return BookLinkProvider{downloadUrl, bookFinder}
 }

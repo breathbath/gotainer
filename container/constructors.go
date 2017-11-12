@@ -2,5 +2,5 @@
 //centralised endpoint for fetching them from the dependencies container.
 package container
 
-//Should return a service or an error
+//Constructor func to return a service or an error
 type Constructor func(c Container) (interface{}, error)

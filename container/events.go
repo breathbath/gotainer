@@ -11,7 +11,7 @@ type EventsContainer struct {
 	dependencyObservers map[string]map[string]dependencyNotifier
 }
 
-//Main constructor
+//NewEventsContainer EventsContainer constructor
 func NewEventsContainer() *EventsContainer {
 	return &EventsContainer{
 		dependencyEvents:    map[string][]string{},

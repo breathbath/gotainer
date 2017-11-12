@@ -1,6 +1,6 @@
 package examples
 
-//Caching layer for book entities
+//Cache caching layer for book entities
 type Cache interface {
 	Cache(book Book)
 }

@@ -7,7 +7,7 @@ type PriceCalculator struct {
 	priceDiscounter func(inputPrice int) int
 }
 
-//Constructor
+//NewPriceCalculator PriceCalculator constructor
 func NewPriceCalculator(priceFinder PriceFinder, priceMultiplier func(inputPrice int) int) *PriceCalculator {
 	return &PriceCalculator{
 		priceFinder:     priceFinder,

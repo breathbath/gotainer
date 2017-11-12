@@ -1,16 +1,16 @@
 package examples
 
-//Cache for your books
+//InMemoryCache cache for your books
 type InMemoryCache struct {
 	cache map[string]Book
 }
 
-//Main constructor
+//NewInMemoryCache InMemoryCache constructor
 func NewInMemoryCache() *InMemoryCache {
 	return &InMemoryCache{make(map[string]Book)}
 }
 
-//Caches a book by its id
+//Cache saves a book by id in a cache
 func (dependencyCache *InMemoryCache) Cache(book Book) {
 	dependencyCache.cache[book.Id] = book
 }

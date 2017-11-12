@@ -3,12 +3,12 @@ package examples
 //IncompatibleCache simulates a mock that doesn't implement the Cache interface
 type IncompatibleCache struct{}
 
-//Simulates constructor
+//NewIncompatibleCache IncompatibleCache constructor
 func NewIncompatibleCache() IncompatibleCache {
 	return IncompatibleCache{}
 }
 
-//Not compatible func declaration
+//Cache a incompatible func declaration
 func (dependencyCache IncompatibleCache) Cache(book Book) bool {
 	return false
 }

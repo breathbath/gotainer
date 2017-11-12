@@ -3,7 +3,7 @@ package examples
 //PriceFinder is intended to find prices of books
 type PriceFinder func(bookId string) int
 
-//Main constructor
+//NewBooksPriceFinder PriceFinder constructor
 func NewBooksPriceFinder(bookPrices map[string]int, books []Book) PriceFinder {
 	return func(bookId string) int {
 		price, ok := bookPrices[bookId]

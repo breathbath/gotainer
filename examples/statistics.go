@@ -10,7 +10,7 @@ type StatisticsGateway struct {
 	statisticsProviders []StatisticsProvider
 }
 
-//Constructor for StatisticsGateway
+//NewStatisticsGateway constructor for StatisticsGateway
 func NewStatisticsGateway() *StatisticsGateway {
 	return &StatisticsGateway{statisticsProviders: []StatisticsProvider{}}
 }
