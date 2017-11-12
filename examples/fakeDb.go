@@ -8,7 +8,7 @@ type FakeDb struct {
 	connectionString string
 }
 
-//FakeDb main constructor
+//NewFakeDb main constructor
 func NewFakeDb(connectionString string) FakeDb {
 	//to make sure that a correct value is provided from the config
 	if connectionString != "someConnectionString" {
