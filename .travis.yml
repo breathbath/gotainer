@@ -15,7 +15,7 @@ before_install:
 
 script:
  - go vet $(go list ./... | grep -v /vendor/)
- - go test -race -coverprofile=coverage.txt -covermode=atomic
+ - go test -race -coverprofile=coverage.txt -covermode=atomic github.com/breathbath/gotainer/tests
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
