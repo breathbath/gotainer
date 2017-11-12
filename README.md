@@ -249,10 +249,13 @@ If your application is very big, you can declare small containers for your packa
             otherLibraryContainer := other_library_container.NewAppContainer()
             container.Merge(otherLibraryContainer)
 
-            return container
+            return *container
         }
 
 Don't put container init logic into your main.go file as it might grow very big and will not be reusable.
+
+The best way to avoid this is to return a container from your "NewAppContainer" method rather than a pointer to it.
+This will make sure that your container won't be modified at runtime in your business code.
 
 2. Add services declarations in the container init method:
 
@@ -332,7 +335,7 @@ You can use interface return types and type assertions as well like this:
 
 ## Testing
 
-1. Working with "RuntimeContainer" means that possible errors in a service declaration won't appear until you fetch it from the container.
+Working with "RuntimeContainer" means that possible errors in a service declaration won't appear until you fetch it from the container.
 To make sure, that your declared container has valid service definitions, you should run the "Check" method. You
 do it in an integration test as:
 
