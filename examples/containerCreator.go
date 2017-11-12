@@ -11,7 +11,7 @@ func CreateContainer() container.Container {
 
 	runtimeContainer.AddNewMethod("config", NewConfig)
 
-	runtimeContainer.AddConstructor("db",  func(c container.Container) (interface{}, error){
+	runtimeContainer.AddConstructor("db", func(c container.Container) (interface{}, error) {
 		var config Config
 		c.Scan("config", &config)
 		connectionString := config.GetValue("fakeDbConnectionString")
@@ -52,7 +52,6 @@ func CreateContainer() container.Container {
 
 	runtimeContainer.AddNewMethod("book_downloader", NewBookDownloader, "in_memory_cache", "book_link_provider", "book_finder", "web_fetcher")
 
-
 	runtimeContainer.AddConstructor("wrong_book_creator", func(c container.Container) (interface{}, error) {
 		return 123, nil
 	})
@@ -64,7 +63,7 @@ func CreateContainer() container.Container {
 
 	runtimeContainer.AddNewMethod("statistics_gateway", NewStatisticsGateway)
 
-	runtimeContainer.AddDependencyObserver("statistics_provider", "statistics_gateway", func(sg *StatisticsGateway, sp StatisticsProvider){
+	runtimeContainer.AddDependencyObserver("statistics_provider", "statistics_gateway", func(sg *StatisticsGateway, sp StatisticsProvider) {
 		sg.AddStatisticsProvider(sp)
 	})
 

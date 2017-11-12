@@ -1,9 +1,9 @@
 package container
 
 import (
-	"reflect"
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 //copySourceVariableToDestinationVariable copies a dependency fetched from the container

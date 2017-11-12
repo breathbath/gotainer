@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"testing"
 	"github.com/breathbath/gotainer/examples"
+	"testing"
 )
 
 func TestAllPresetDefinitions(t *testing.T) {

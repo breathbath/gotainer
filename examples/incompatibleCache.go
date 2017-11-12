@@ -1,6 +1,6 @@
 package examples
 
-type IncompatibleCache struct {}
+type IncompatibleCache struct{}
 
 func NewIncompatibleCache() IncompatibleCache {
 	return IncompatibleCache{}

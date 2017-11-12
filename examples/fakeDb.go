@@ -41,7 +41,7 @@ func (fdb FakeDb) FindInTable(tableName, id string) (string, bool) {
 	return bookName, found
 }
 
-func (fdb FakeDb) CountItems(tableName string) (int) {
+func (fdb FakeDb) CountItems(tableName string) int {
 	tableData, found := fdb.data[tableName]
 	if found {
 		return len(tableData)

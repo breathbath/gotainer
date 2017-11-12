@@ -34,7 +34,6 @@ func convertNewMethodToConstructor(container Container, newMethod interface{}, n
 	}
 }
 
-
 //convertCustomObserverResolverToDependencyNotifier converts something like func(observer Observer, dependency Dependency)
 // which is customObserverResolver to func(observer interface{}, dependency interface{}) which is dependencyNotifier
 //as customObserverResolver can be anything we need to make sure that function

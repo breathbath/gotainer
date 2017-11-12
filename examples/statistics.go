@@ -12,7 +12,7 @@ func NewStatisticsGateway() *StatisticsGateway {
 	return &StatisticsGateway{statisticsProviders: []StatisticsProvider{}}
 }
 
-func (sg *StatisticsGateway) AddStatisticsProvider (sp StatisticsProvider) {
+func (sg *StatisticsGateway) AddStatisticsProvider(sp StatisticsProvider) {
 	sg.statisticsProviders = append(sg.statisticsProviders, sp)
 }
 

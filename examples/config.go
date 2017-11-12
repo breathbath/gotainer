@@ -2,7 +2,7 @@ package examples
 
 type Config struct {
 	fakeDbConnectionString string
-	staticFilesUrl string
+	staticFilesUrl         string
 }
 
 func NewConfig() Config {

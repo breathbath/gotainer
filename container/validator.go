@@ -1,9 +1,9 @@
 package container
 
 import (
-	"reflect"
-	"fmt"
 	"errors"
+	"fmt"
+	"reflect"
 )
 
 func assertIsFunction(reflectedConstructorFunc reflect.Value) {

@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"testing"
 	"github.com/breathbath/gotainer/examples"
+	"testing"
 )
 
 func TestContainerCache(t *testing.T) {
@@ -12,7 +12,7 @@ func TestContainerCache(t *testing.T) {
 
 	c.Scan("book_shelve", &bookShelve)
 
-	bookShelve.Add(examples.Book{Id:"123", Title: "Book1", Author: "Author1"})
+	bookShelve.Add(examples.Book{Id: "123", Title: "Book1", Author: "Author1"})
 
 	var bookShelve2 examples.BookShelve
 

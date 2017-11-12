@@ -1,27 +1,27 @@
 package tests
 
 import (
-	"testing"
-	"github.com/breathbath/gotainer/examples"
-	"github.com/breathbath/gotainer/container"
 	"errors"
+	"github.com/breathbath/gotainer/container"
+	"github.com/breathbath/gotainer/examples"
+	"testing"
 )
 
 func TestLazyCollectionDependencies(t *testing.T) {
 	cont := examples.CreateContainer()
 
-	cont.AddConstructor("someMap", func(c container.Container) (interface{}, error){
+	cont.AddConstructor("someMap", func(c container.Container) (interface{}, error) {
 		return map[string]string{"someMapKey": "someMapValue"}, nil
 	})
 
-	cont.AddConstructor("someSlice", func(c container.Container) (interface{}, error){
+	cont.AddConstructor("someSlice", func(c container.Container) (interface{}, error) {
 		return []string{"someSliceValue1", "someSliceValue2"}, nil
 	})
 
 	AssertStringValueExtracted(
 		"someMapValue",
 		"someMapFetcher",
-		func(c container.Container) (interface{}, error){
+		func(c container.Container) (interface{}, error) {
 			var mapDependency map[string]string
 			c.Scan("someMap", &mapDependency)
 			return mapDependency["someMapKey"], nil
@@ -33,7 +33,7 @@ func TestLazyCollectionDependencies(t *testing.T) {
 	AssertStringValueExtracted(
 		"someSliceValue2",
 		"someSliceFetcher",
-		func(c container.Container) (interface{}, error){
+		func(c container.Container) (interface{}, error) {
 			var sliceString []string
 			c.Scan("someSlice", &sliceString)
 			if len(sliceString) < 2 {

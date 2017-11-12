@@ -1,7 +1,7 @@
 package examples
 
 type InMemoryCache struct {
-	cache map[string] Book
+	cache map[string]Book
 }
 
 func NewInMemoryCache() *InMemoryCache {

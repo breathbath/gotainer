@@ -1,9 +1,9 @@
 package tests
 
 import (
-	"testing"
-	"github.com/breathbath/gotainer/examples"
 	"github.com/breathbath/gotainer/container"
+	"github.com/breathbath/gotainer/examples"
+	"testing"
 )
 
 func TestWrongMixedDependenciesInStaticCall(t *testing.T) {
