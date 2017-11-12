@@ -14,12 +14,12 @@ Further on you can fetch them by this key in any part of your application.
 
 # How to install
 
-        go get github.com/breathbath/gotainer
+        go get github.com/breathbath/gotainer/container
 
 If you use [Go dep tool](https://github.com/golang/dep):
 
         //1. Add it to your dependencies file
-        dep ensure -add github.com/breathbath/gotainer
+        dep ensure -add github.com/breathbath/gotainer/container
 
         //2. Use container somewhere in the code (e.g. declare some dependencies)
 
