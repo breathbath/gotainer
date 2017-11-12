@@ -1,7 +1,9 @@
 package examples
 
+//PriceFinder is intended to find prices of books
 type PriceFinder func(bookId string) int
 
+//Main constructor
 func NewBooksPriceFinder(bookPrices map[string]int, books []Book) PriceFinder {
 	return func(bookId string) int {
 		price, ok := bookPrices[bookId]
@@ -18,10 +20,7 @@ func NewBooksPriceFinder(bookPrices map[string]int, books []Book) PriceFinder {
 	}
 }
 
+//GetBookPrices gives a list of prices for books
 func GetBookPrices() map[string]int {
 	return map[string]int{"1": 100, "2": 200}
-}
-
-func GetAllBooks() []Book {
-	return []Book{Book{"1", "Book1", "Author1"}, Book{"2", "Book2", "Author2"}}
 }

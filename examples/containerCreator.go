@@ -2,6 +2,7 @@ package examples
 
 import "github.com/breathbath/gotainer/container"
 
+//CreateContainer gives a container example
 func CreateContainer() container.Container {
 	runtimeContainer := container.NewRuntimeContainer()
 

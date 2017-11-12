@@ -3,7 +3,6 @@
 [![Travis Status for breathbath/gotainer](https://api.travis-ci.org/breathbath/gotainer.svg?branch=master&label=linux+build)](https://travis-ci.org/breathbath/gotainer)
 [![godoc for breathbath/gotainer](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/breathbath/gotainer/container)
 [![goreportcard for breathbath/gotainer](https://goreportcard.com/badge/github.com/breathbath/gotainer)](https://goreportcard.com/report/breathbath/gotainer)
-[![goreportcard for breathbath/gotainer](https://goreportcard.com/badge/github.com/breathbath/gotainer)](https://goreportcard.com/report/breathbath/gotainer)
 
 This library helps to manage dependencies in your project by providing a centralised logic for initialising services.
 

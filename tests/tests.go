@@ -2,6 +2,7 @@ package tests
 
 import "testing"
 
+//ExpectPanic a helper method to simulate a  panic expectation in tests
 func ExpectPanic(expectedPanicName string, t *testing.T) {
 	err := recover()
 	if err == nil {

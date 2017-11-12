@@ -11,6 +11,7 @@ type EventsContainer struct {
 	dependencyObservers map[string]map[string]dependencyNotifier
 }
 
+//Main constructor
 func NewEventsContainer() *EventsContainer {
 	return &EventsContainer{
 		dependencyEvents:    map[string][]string{},
@@ -19,19 +20,19 @@ func NewEventsContainer() *EventsContainer {
 }
 
 //registerDependencyEvent triggers an event about adding a concrete dependency to the container
-func (this *EventsContainer) registerDependencyEvent(eventName, dependencyName string) {
-	if this.dependencyEvents[eventName] == nil {
-		this.dependencyEvents[eventName] = []string{}
+func (ec *EventsContainer) registerDependencyEvent(eventName, dependencyName string) {
+	if ec.dependencyEvents[eventName] == nil {
+		ec.dependencyEvents[eventName] = []string{}
 	}
-	this.dependencyEvents[eventName] = append(this.dependencyEvents[eventName], dependencyName)
+	ec.dependencyEvents[eventName] = append(ec.dependencyEvents[eventName], dependencyName)
 }
 
 //addDependencyObserver adds the service (observer) which will receive dependencies added by known events
-func (this *EventsContainer) addDependencyObserver(eventName, observerId string, observerResolver interface{}) {
-	if this.dependencyObservers[observerId] == nil {
-		this.dependencyObservers[observerId] = map[string]dependencyNotifier{}
+func (ec *EventsContainer) addDependencyObserver(eventName, observerId string, observerResolver interface{}) {
+	if ec.dependencyObservers[observerId] == nil {
+		ec.dependencyObservers[observerId] = map[string]dependencyNotifier{}
 	}
-	this.dependencyObservers[observerId][eventName] = convertCustomObserverResolverToDependencyNotifier(
+	ec.dependencyObservers[observerId][eventName] = convertCustomObserverResolverToDependencyNotifier(
 		observerResolver,
 		eventName,
 		observerId,
@@ -39,14 +40,14 @@ func (this *EventsContainer) addDependencyObserver(eventName, observerId string,
 }
 
 //notifyObserverAboutDependency we call observer methods with all the dependencies that it's interested in
-func (this *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, observerId string, observer interface{}) {
-	eventObservers, eventObserverFound := this.dependencyObservers[observerId]
+func (ec *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, observerId string, observer interface{}) {
+	eventObservers, eventObserverFound := ec.dependencyObservers[observerId]
 	if !eventObserverFound {
 		return
 	}
 
 	for eventName, dependencyObserver := range eventObservers {
-		dependencies, eventFound := this.dependencyEvents[eventName]
+		dependencies, eventFound := ec.dependencyEvents[eventName]
 		if !eventFound {
 			continue
 		}
@@ -59,16 +60,16 @@ func (this *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, o
 }
 
 //merge helps to accumulate event collections when we try to merge containers
-func (this *EventsContainer) merge(ec EventsContainer) {
-	for ecKey, events := range ec.dependencyEvents {
+func (ec *EventsContainer) merge(ecToCopy EventsContainer) {
+	for ecKey, events := range ecToCopy.dependencyEvents {
 		for _, dependencyName := range events {
-			this.dependencyEvents[ecKey] = append(this.dependencyEvents[ecKey], dependencyName)
+			ec.dependencyEvents[ecKey] = append(ec.dependencyEvents[ecKey], dependencyName)
 		}
 	}
 
-	for observerId, dependencyNotifiers := range ec.dependencyObservers {
+	for observerId, dependencyNotifiers := range ecToCopy.dependencyObservers {
 		for eventName, dependencyNotifier := range dependencyNotifiers {
-			this.dependencyObservers[observerId][eventName] = dependencyNotifier
+			ec.dependencyObservers[observerId][eventName] = dependencyNotifier
 		}
 	}
 }
