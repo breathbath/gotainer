@@ -22,5 +22,5 @@ func (bs BookStorage) GetStatistics() (string, int) {
 
 //GetAllBooks get some collection of books
 func GetAllBooks() []Book {
-	return []Book{Book{"1", "Book1", "Author1"}, Book{"2", "Book2", "Author2"}}
+	return []Book{{"1", "Book1", "Author1"}, {"2", "Book2", "Author2"}}
 }
