@@ -90,6 +90,13 @@ func (rc *RuntimeContainer) Check() {
 //Merge allows to merge containers
 func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 	for keyConstructor, constr := range c.getConstructors() {
+		if _, ok := rc.constructors[keyConstructor]; ok {
+			conflictingErrorMessage := fmt.Sprintf(
+				"Cannot merge containers because of non unique service id '%s'",
+				keyConstructor,
+			)
+			panic(conflictingErrorMessage)
+		}
 		rc.constructors[keyConstructor] = constr
 	}
 

@@ -1,4 +1,4 @@
 1. Add "HAS" method for a secure dependency check
 2. Unittest merge
 3. Adding a static vars list as dependencies + simplified adding of scalar vars or already initialised services
-4.
+4. Solve issues with the scanning of pointer services, where container returns service rather than a pointer to it
