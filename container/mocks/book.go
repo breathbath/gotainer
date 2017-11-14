@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //Book entity
 type Book struct {

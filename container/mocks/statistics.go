@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //StatisticsProvider gives a statistic metric
 type StatisticsProvider interface {

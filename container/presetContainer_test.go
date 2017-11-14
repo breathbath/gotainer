@@ -1,20 +1,20 @@
-package tests
+package container
 
 import (
-	"github.com/breathbath/gotainer/examples"
 	"testing"
+	"github.com/breathbath/gotainer/container/mocks"
 )
 
 func TestAllPresetDefinitions(t *testing.T) {
-	cont := examples.CreateContainer()
+	cont := CreateContainer()
 
-	var bc examples.BookCreator
+	var bc mocks.BookCreator
 	cont.Scan("book_creator", &bc)
 
-	var bs examples.BookStorage
+	var bs mocks.BookStorage
 	cont.Scan("book_storage", &bs)
 
-	var finder examples.BookFinder
+	var finder mocks.BookFinder
 	cont.Scan("book_finder", &finder)
 
 	book, result := finder.FindBook("one")
@@ -24,7 +24,7 @@ func TestAllPresetDefinitions(t *testing.T) {
 		)
 	}
 
-	var staticFinder examples.BookFinder
+	var staticFinder mocks.BookFinder
 	cont.Scan("book_finder_declared_statically", &staticFinder)
 
 	book, result = finder.FindBook("two")
@@ -36,8 +36,8 @@ func TestAllPresetDefinitions(t *testing.T) {
 }
 
 func TestStaticParameterDependency(t *testing.T) {
-	container := examples.CreateContainer()
-	var bookLinkProvider examples.BookLinkProvider
+	container := CreateContainer()
+	var bookLinkProvider mocks.BookLinkProvider
 	container.Scan("book_link_provider", &bookLinkProvider)
 
 	url := bookLinkProvider.GetLink("one")
@@ -52,8 +52,8 @@ func TestStaticParameterDependency(t *testing.T) {
 }
 
 func TestPointerAndInterfaceDependencies(t *testing.T) {
-	var bookDownloader examples.BookDownloader
-	container := examples.CreateContainer()
+	var bookDownloader mocks.BookDownloader
+	container := CreateContainer()
 	container.Scan("book_downloader", &bookDownloader)
 
 	fetchedContent := bookDownloader.DownloadBook("two")

@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //IncompatibleCache simulates a mock that doesn't implement the Cache interface
 type IncompatibleCache struct{}

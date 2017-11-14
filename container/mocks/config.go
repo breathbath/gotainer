@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //Config simulates some configuration for your app
 type Config struct {

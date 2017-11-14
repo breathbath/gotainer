@@ -1,25 +1,24 @@
-package tests
+package container
 
 import (
 	"testing"
-	"github.com/breathbath/gotainer/container"
-	"github.com/breathbath/gotainer/examples"
 	"fmt"
+	"github.com/breathbath/gotainer/container/mocks"
 )
 
-func setupTwoContainers() (*container.RuntimeContainer, *container.RuntimeContainer) {
-	container1 := container.NewRuntimeContainer()
-	container1.AddNewMethod("book_shelve", examples.NewBookShelve)
+func setupTwoContainers() (*RuntimeContainer, *RuntimeContainer) {
+	container1 := NewRuntimeContainer()
+	container1.AddNewMethod("book_shelve", mocks.NewBookShelve)
 
-	bookShelve := container1.Get("book_shelve", true).(*examples.BookShelve)
-	bookShelve.Add(examples.Book{Id: "1", Title: "Book"})
+	bookShelve := container1.Get("book_shelve", true).(*mocks.BookShelve)
+	bookShelve.Add(mocks.Book{Id: "1", Title: "Book"})
 
-	container1.AddConstructor("memory_cache", func(c container.Container) (interface{}, error) {
-		return examples.NewInMemoryCache(), nil
+	container1.AddConstructor("memory_cache", func(c Container) (interface{}, error) {
+		return mocks.NewInMemoryCache(), nil
 	})
 
-	container2 := container.NewRuntimeContainer()
-	container2.AddNewMethod("config", examples.NewConfig)
+	container2 := NewRuntimeContainer()
+	container2.AddNewMethod("config", mocks.NewConfig)
 
 	return container1, container2
 }
@@ -29,14 +28,14 @@ func TestContainerMerge(t *testing.T) {
 	container1, container2 := setupTwoContainers()
 	container1.Merge(container2)
 
-	var config examples.Config
+	var config mocks.Config
 	container1.Scan("config", &config)
 
 	if config.GetValue("fakeDbConnectionString") != "someConnectionString" {
 		t.Error("'Config' service merged into the container has a wrong definition")
 	}
 
-	bookShelve := container1.Get("book_shelve", true).(*examples.BookShelve)
+	bookShelve := container1.Get("book_shelve", true).(*mocks.BookShelve)
 
 	assertBookShelveContainsBook(bookShelve, 1, "1", t)
 }
@@ -45,12 +44,12 @@ func TestContainerMerge(t *testing.T) {
 func TestNonUniqueServicesMerge(t *testing.T) {
 
 	container1, container2 := setupTwoContainers()
-	container2.AddNewMethod("book_shelve", examples.NewBookShelve)
+	container2.AddNewMethod("book_shelve", mocks.NewBookShelve)
 	defer ExpectPanic(fmt.Sprintf("Cannot merge containers because of non unique service id '%s'", "book_shelve"), t)
 	container1.Merge(container2)
 }
 
-func assertBookShelveContainsBook(bookShelve *examples.BookShelve, expectedBooksAmount int, expectedBookId string, t *testing.T) {
+func assertBookShelveContainsBook(bookShelve *mocks.BookShelve, expectedBooksAmount int, expectedBookId string, t *testing.T) {
 	books := bookShelve.GetBooks()
 	if expectedBooksAmount == 0 && len(books) != 0 {
 		t.Error("The service 'book_shelve' shouldn't contain books but it has at least one book inside")

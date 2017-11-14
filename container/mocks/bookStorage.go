@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //BookStorage repository for books data
 type BookStorage struct {

@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //BookDownloader simulates books downloading from a url
 type BookDownloader struct {

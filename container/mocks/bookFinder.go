@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //BookFinder searches books
 type BookFinder struct {

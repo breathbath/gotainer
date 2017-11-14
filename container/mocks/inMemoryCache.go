@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //InMemoryCache cache for your books
 type InMemoryCache struct {

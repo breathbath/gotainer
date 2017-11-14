@@ -1,4 +1,4 @@
-package tests
+package container
 
 import "testing"
 

@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //WebFetcher simulates downloading of a data from a url
 type WebFetcher struct{}

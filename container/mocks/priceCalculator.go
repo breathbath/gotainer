@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //PriceCalculator simulates a price computation engine
 type PriceCalculator struct {

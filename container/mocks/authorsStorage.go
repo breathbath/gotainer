@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //AuthorsStorage repository for authors data
 type AuthorsStorage struct {

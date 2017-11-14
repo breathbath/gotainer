@@ -1,20 +1,20 @@
-package tests
+package container
 
 import (
-	"github.com/breathbath/gotainer/examples"
+	"github.com/breathbath/gotainer/container/mocks"
 	"testing"
 )
 
 func TestContainerCache(t *testing.T) {
-	c := examples.CreateContainer()
+	c := CreateContainer()
 
-	var bookShelve examples.BookShelve
+	var bookShelve mocks.BookShelve
 
 	c.Scan("book_shelve", &bookShelve)
 
-	bookShelve.Add(examples.Book{Id: "123", Title: "Book1", Author: "Author1"})
+	bookShelve.Add(mocks.Book{Id: "123", Title: "Book1", Author: "Author1"})
 
-	var bookShelve2 examples.BookShelve
+	var bookShelve2 mocks.BookShelve
 
 	c.Scan("book_shelve", &bookShelve2)
 	AssertBookShelveHasBook("123", "Book1", "Author1", t, bookShelve)
@@ -25,7 +25,7 @@ func TestContainerCache(t *testing.T) {
 	}
 }
 
-func AssertBookShelveHasBook(id, title, author string, t *testing.T, bs examples.BookShelve) {
+func AssertBookShelveHasBook(id, title, author string, t *testing.T, bs mocks.BookShelve) {
 	if len(bs.GetBooks()) != 1 {
 		t.Errorf("Book shelve should contain books after adding")
 		return

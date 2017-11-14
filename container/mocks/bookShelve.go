@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //BookShelve holds a temp collection of books
 type BookShelve struct {

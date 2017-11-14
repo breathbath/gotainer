@@ -1,27 +1,26 @@
-package tests
+package container
 
 import (
 	"errors"
-	"github.com/breathbath/gotainer/container"
-	"github.com/breathbath/gotainer/examples"
 	"testing"
+	"github.com/breathbath/gotainer/container/mocks"
 )
 
 func TestLazyCollectionDependencies(t *testing.T) {
-	cont := examples.CreateContainer()
+	cont := CreateContainer()
 
-	cont.AddConstructor("someMap", func(c container.Container) (interface{}, error) {
+	cont.AddConstructor("someMap", func(c Container) (interface{}, error) {
 		return map[string]string{"someMapKey": "someMapValue"}, nil
 	})
 
-	cont.AddConstructor("someSlice", func(c container.Container) (interface{}, error) {
+	cont.AddConstructor("someSlice", func(c Container) (interface{}, error) {
 		return []string{"someSliceValue1", "someSliceValue2"}, nil
 	})
 
 	AssertStringValueExtracted(
 		"someMapValue",
 		"someMapFetcher",
-		func(c container.Container) (interface{}, error) {
+		func(c Container) (interface{}, error) {
 			var mapDependency map[string]string
 			c.Scan("someMap", &mapDependency)
 			return mapDependency["someMapKey"], nil
@@ -33,7 +32,7 @@ func TestLazyCollectionDependencies(t *testing.T) {
 	AssertStringValueExtracted(
 		"someSliceValue2",
 		"someSliceFetcher",
-		func(c container.Container) (interface{}, error) {
+		func(c Container) (interface{}, error) {
 			var sliceString []string
 			c.Scan("someSlice", &sliceString)
 			if len(sliceString) < 2 {
@@ -47,10 +46,10 @@ func TestLazyCollectionDependencies(t *testing.T) {
 }
 
 func TestCollectionDependencies(t *testing.T) {
-	cont := examples.CreateContainer()
-	cont.AddNewMethod("book_prices", examples.GetBookPrices)
-	cont.AddNewMethod("books", examples.GetAllBooks)
-	cont.AddNewMethod("price_finder", examples.NewBooksPriceFinder, "book_prices", "books")
+	cont := CreateContainer()
+	cont.AddNewMethod("book_prices", mocks.GetBookPrices)
+	cont.AddNewMethod("books", mocks.GetAllBooks)
+	cont.AddNewMethod("price_finder", mocks.NewBooksPriceFinder, "book_prices", "books")
 
 	var priceCalculator func(bookId string) int
 	cont.Scan("price_finder", &priceCalculator)
@@ -62,7 +61,7 @@ func TestCollectionDependencies(t *testing.T) {
 	}
 }
 
-func AssertStringValueExtracted(expectedString string, extractFuncName string, extractFunc container.Constructor, c container.Container, t *testing.T) {
+func AssertStringValueExtracted(expectedString string, extractFuncName string, extractFunc Constructor, c Container, t *testing.T) {
 	c.AddConstructor(extractFuncName, extractFunc)
 	var result string
 	c.Scan(extractFuncName, &result)

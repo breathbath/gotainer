@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //BookLinkProvider creates book links
 type BookLinkProvider struct {

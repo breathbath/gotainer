@@ -1,4 +1,4 @@
-package examples
+package mocks
 
 //PriceFinder is intended to find prices of books
 type PriceFinder func(bookId string) int

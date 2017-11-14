@@ -1,13 +1,13 @@
-package tests
+package container
 
 import (
-	"github.com/breathbath/gotainer/examples"
 	"testing"
+	"github.com/breathbath/gotainer/container/mocks"
 )
 
 func TestContainerEvents(t *testing.T) {
-	c := examples.CreateContainer()
-	var sg examples.StatisticsGateway
+	c := CreateContainer()
+	var sg mocks.StatisticsGateway
 
 	c.Scan("statistics_gateway", &sg)
 	stats := sg.CollectStatistics()
