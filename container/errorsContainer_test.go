@@ -3,6 +3,7 @@ package container
 import (
 	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	"errors"
 )
 
 func TestWrongMixedDependenciesInStaticCall(t *testing.T) {
@@ -52,6 +53,45 @@ func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
 	})
 
 	cont.Check()
+}
+
+func TestFailureOnCustomConstructorError(t *testing.T) {
+	cont := CreateContainer()
+	cont.AddConstructor("some_failing_constructor", func(c Container) (interface{}, error) {
+		return nil, errors.New("Something bad has happened")
+	})
+	defer ExpectPanic("Something bad has happened", t)
+	cont.Get("some_failing_constructor", true)
+}
+
+func TestWrongArgumentsCountInNewMethod(t *testing.T) {
+	cont := CreateContainer()
+	defer ExpectPanic("The function requires 2 dependencies, but 3 arguments are provided", t)
+	cont.AddNewMethod("wrong_arg_count_dependency", mocks.NewBookFinder, "book_storage", "book_creator", "config")
+}
+
+func TestNewMethodIsNotFunc(t *testing.T) {
+	cont := CreateContainer()
+	defer ExpectPanic("Destination object should be a constructor function rather than string", t)
+	cont.AddNewMethod("wrong_arg_count_dependency", "non_func")
+}
+
+func TestValidationOfReturnsCountInNewMethod(t *testing.T) {
+	cont := CreateContainer()
+	someBadNewFunc := func() (int, error, bool){
+		return 1, errors.New("some error"), true
+	}
+	defer ExpectPanic("constructor function should return 1 or 2 values, but 3 values are returned", t)
+	cont.AddNewMethod("wrong_return_count_dependency", someBadNewFunc)
+}
+
+func TestNewMethodWithTwoReturnsHasAtLeastOneError(t *testing.T) {
+	cont := CreateContainer()
+	someBadNewFunc := func() (int, bool){
+		return 1, true
+	}
+	defer ExpectPanic("constructor function with 2 returned values should return at least one error interface", t)
+	cont.AddNewMethod("wrong_two_returns_with_no_error_dependency", someBadNewFunc)
 }
 
 func TestCorrectCheck(t *testing.T) {

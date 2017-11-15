@@ -66,3 +66,18 @@ func TestPointerAndInterfaceDependencies(t *testing.T) {
 		)
 	}
 }
+
+func TestNewMethodWithTwoReturns(t *testing.T) {
+	newMethodWithTwoReturns := func() (mocks.Book, error) {
+		return mocks.Book{Id: "123"}, nil
+	}
+
+	container := CreateContainer()
+	container.AddNewMethod("some_book", newMethodWithTwoReturns)
+
+	book := container.Get("some_book", true).(mocks.Book)
+
+	if book.Id != "123" {
+		t.Error("New method with 2 returns should return a book with id 123, but none was returned")
+	}
+}

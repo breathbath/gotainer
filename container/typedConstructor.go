@@ -20,13 +20,22 @@ func convertNewMethodToConstructor(container Container, newMethod interface{}, n
 	return func(c Container) (interface{}, error) {
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
 		if reflectedNewMethod.Type().NumOut() == 2 {
+			var err error
 			if isErrorType(reflectedNewMethod.Type().Out(0)) {
-				err := values[0].Interface().(error)
+				if values[0].IsNil() {
+					err = nil
+				} else {
+					err = values[0].Interface().(error)
+				}
 				obj := values[1].Interface()
 				return obj, err
 			}
 			obj := values[0].Interface()
-			err := values[1].Interface().(error)
+			if values[1].IsNil() {
+				err = nil
+			} else {
+				err = values[1].Interface().(error)
+			}
 			return obj, err
 		}
 		obj := values[0].Interface()

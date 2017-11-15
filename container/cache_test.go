@@ -25,6 +25,14 @@ func TestContainerCache(t *testing.T) {
 	}
 }
 
+func TestNonCachedRequestForMismatchedDestinationType(t *testing.T) {
+	c := CreateContainer()
+	defer ExpectPanic("Cannot convert created value of type 'Config' to expected destination value 'Book' for createdDependency declaration config", t)
+	var book mocks.Book
+
+	c.ScanNonCached("config", &book)
+}
+
 func AssertBookShelveHasBook(id, title, author string, t *testing.T, bs mocks.BookShelve) {
 	if len(bs.GetBooks()) != 1 {
 		t.Errorf("Book shelve should contain books after adding")

@@ -26,16 +26,16 @@ func setupTwoContainers() (*RuntimeContainer, *RuntimeContainer) {
 //TestContainerMerge expects services from both containers to be available
 func TestContainerMerge(t *testing.T) {
 	container1, container2 := setupTwoContainers()
-	container1.Merge(container2)
+	container2.Merge(container1)
 
 	var config mocks.Config
-	container1.Scan("config", &config)
+	container2.Scan("config", &config)
 
 	if config.GetValue("fakeDbConnectionString") != "someConnectionString" {
 		t.Error("'Config' service merged into the container has a wrong definition")
 	}
 
-	bookShelve := container1.Get("book_shelve", true).(*mocks.BookShelve)
+	bookShelve := container2.Get("book_shelve", true).(*mocks.BookShelve)
 
 	assertBookShelveContainsBook(bookShelve, 1, "1", t)
 }
