@@ -68,16 +68,16 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 		panic(errors.New(errStr))
 	}
 
-	result, err := constructorFunc(rc)
+	service, err := constructorFunc(rc)
 	if err != nil {
 		panic(err)
 	}
 
-	rc.eventsContainer.notifyObserverAboutDependency(*rc, id, result)
+	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
 
-	rc.cache.Set(id, result)
+	rc.cache.Set(id, service)
 
-	return result
+	return service
 }
 
 //Check ensures that all runtime dependencies are created correctly

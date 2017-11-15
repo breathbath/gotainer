@@ -1,52 +1,50 @@
 package container
 
-//dependencyNotifier is a function that receives observer as a service interested in a dependency
+//serviceNotificationCallback is a function that receives observer as a service interested in a dependency
 //received in the second argument so you can call it as observer.SetSomeDependency(dependency)
-type dependencyNotifier func(observer interface{}, dependency interface{})
+type serviceNotificationCallback func(serviceInterestedInDependency interface{}, dependency interface{})
 
 //EventsContainer contains all observer, events and dependencies declarations, that you might
 //add in your container
 type EventsContainer struct {
-	dependencyEvents    map[string][]string
-	dependencyObservers map[string]map[string]dependencyNotifier
+	dependencyEvents             map[string][]string
+	serviceNotificationCallbacks map[string]map[string]serviceNotificationCallback
 }
 
 //NewEventsContainer EventsContainer constructor
 func NewEventsContainer() *EventsContainer {
 	return &EventsContainer{
-		dependencyEvents:    map[string][]string{},
-		dependencyObservers: map[string]map[string]dependencyNotifier{},
+		dependencyEvents:             map[string][]string{},
+		serviceNotificationCallbacks: map[string]map[string]serviceNotificationCallback{},
 	}
 }
 
 //registerDependencyEvent triggers an event about adding a concrete dependency to the container
 func (ec *EventsContainer) registerDependencyEvent(eventName, dependencyName string) {
-	if ec.dependencyEvents[eventName] == nil {
-		ec.dependencyEvents[eventName] = []string{}
-	}
+	ec.initEventCollection(eventName)
 	ec.dependencyEvents[eventName] = append(ec.dependencyEvents[eventName], dependencyName)
 }
 
 //addDependencyObserver adds the service (observer) which will receive dependencies added by known events
-func (ec *EventsContainer) addDependencyObserver(eventName, observerId string, observerResolver interface{}) {
-	if ec.dependencyObservers[observerId] == nil {
-		ec.dependencyObservers[observerId] = map[string]dependencyNotifier{}
+func (ec *EventsContainer) addDependencyObserver(eventName, serviceId string, callbackToProvideDependencyToService interface{}) {
+	if ec.serviceNotificationCallbacks[serviceId] == nil {
+		ec.serviceNotificationCallbacks[serviceId] = map[string]serviceNotificationCallback{}
 	}
-	ec.dependencyObservers[observerId][eventName] = convertCustomObserverResolverToDependencyNotifier(
-		observerResolver,
+	ec.serviceNotificationCallbacks[serviceId][eventName] = wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(
+		callbackToProvideDependencyToService,
 		eventName,
-		observerId,
+		serviceId,
 	)
 }
 
-//notifyObserverAboutDependency we call observer methods with all the dependencies that it's interested in
-func (ec *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, observerId string, observer interface{}) {
-	eventObservers, eventObserverFound := ec.dependencyObservers[observerId]
+//collectDependencyEventsForService we call observer methods with all the dependencies that it's interested in
+func (ec *EventsContainer) collectDependencyEventsForService(c Container, serviceId string, serviceInstance interface{}) {
+	dependencyEventSubscribedServices, eventObserverFound := ec.serviceNotificationCallbacks[serviceId]
 	if !eventObserverFound {
 		return
 	}
 
-	for eventName, dependencyObserver := range eventObservers {
+	for eventName, serviceNotificationCallback := range dependencyEventSubscribedServices {
 		dependencies, eventFound := ec.dependencyEvents[eventName]
 		if !eventFound {
 			continue
@@ -54,7 +52,7 @@ func (ec *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, obs
 
 		for _, dependencyName := range dependencies {
 			dependency := c.Get(dependencyName, true)
-			dependencyObserver(observer, dependency)
+			serviceNotificationCallback(serviceInstance, dependency)
 		}
 	}
 }
@@ -63,13 +61,19 @@ func (ec *EventsContainer) notifyObserverAboutDependency(c RuntimeContainer, obs
 func (ec *EventsContainer) merge(ecToCopy EventsContainer) {
 	for ecKey, events := range ecToCopy.dependencyEvents {
 		for _, dependencyName := range events {
-			ec.dependencyEvents[ecKey] = append(ec.dependencyEvents[ecKey], dependencyName)
+			ec.registerDependencyEvent(ecKey, dependencyName)
 		}
 	}
 
-	for observerId, dependencyNotifiers := range ecToCopy.dependencyObservers {
+	for observerId, dependencyNotifiers := range ecToCopy.serviceNotificationCallbacks {
 		for eventName, dependencyNotifier := range dependencyNotifiers {
-			ec.dependencyObservers[observerId][eventName] = dependencyNotifier
+			ec.addDependencyObserver(eventName, observerId, dependencyNotifier)
 		}
+	}
+}
+
+func (ec *EventsContainer) initEventCollection(eventName string) {
+	if ec.dependencyEvents[eventName] == nil {
+		ec.dependencyEvents[eventName] = []string{}
 	}
 }

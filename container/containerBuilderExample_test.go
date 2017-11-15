@@ -5,7 +5,7 @@ import (
 )
 
 //CreateContainer gives a container example
-func CreateContainer() Container {
+func CreateContainer() *RuntimeContainer {
 	runtimeContainer := NewRuntimeContainer()
 
 	runtimeContainer.AddConstructor("book_creator", func(c Container) (interface{}, error) {
