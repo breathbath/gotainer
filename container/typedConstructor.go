@@ -20,27 +20,31 @@ func convertNewMethodToConstructor(container Container, newMethod interface{}, n
 	return func(c Container) (interface{}, error) {
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
 		if reflectedNewMethod.Type().NumOut() == 2 {
-			var err error
 			if isErrorType(reflectedNewMethod.Type().Out(0)) {
-				if values[0].IsNil() {
-					err = nil
-				} else {
-					err = values[0].Interface().(error)
-				}
-				obj := values[1].Interface()
-				return obj, err
+				return collectErrorAndResult(values[0], values[1])
 			}
-			obj := values[0].Interface()
-			if values[1].IsNil() {
-				err = nil
-			} else {
-				err = values[1].Interface().(error)
-			}
-			return obj, err
+			return collectErrorAndResult(values[1], values[0])
 		}
-		obj := values[0].Interface()
-		return obj, nil
+		return values[0].Interface(), nil
 	}
+}
+
+func collectErrorAndResult(reflectedErrorValue, reflectedServiceValue reflect.Value) (interface{}, error) {
+	err := getErrorOrNil(reflectedErrorValue)
+	service := reflectedServiceValue.Interface()
+
+	return service, err
+}
+
+func getErrorOrNil(value reflect.Value) error {
+	var err error
+	if value.IsNil() {
+		err = nil
+	} else {
+		err = value.Interface().(error)
+	}
+
+	return err
 }
 
 //wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback converts something like func(observer Observer, dependency Dependency)

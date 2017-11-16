@@ -68,16 +68,34 @@ func TestPointerAndInterfaceDependencies(t *testing.T) {
 }
 
 func TestNewMethodWithTwoReturns(t *testing.T) {
-	newMethodWithTwoReturns := func() (mocks.Book, error) {
+	newMethodWithTwoReturns1 := func() (mocks.Book, error) {
 		return mocks.Book{Id: "123"}, nil
 	}
 
-	container := CreateContainer()
-	container.AddNewMethod("some_book", newMethodWithTwoReturns)
-
-	book := container.Get("some_book", true).(mocks.Book)
-
-	if book.Id != "123" {
-		t.Error("New method with 2 returns should return a book with id 123, but none was returned")
+	newMethodWithTwoReturns2 := func() (error, mocks.Book) {
+		return nil, mocks.Book{Id: "456"}
 	}
+
+	container := CreateContainer()
+	container.AddNewMethod("some_book1", newMethodWithTwoReturns1)
+	container.AddNewMethod("some_book2", newMethodWithTwoReturns2)
+
+	assertExpectedBookInContainer(container, "some_book1", "123", t)
+	assertExpectedBookInContainer(container, "some_book2", "456", t)
+}
+
+func assertExpectedBookInContainer(container Container, bookServiceId, expectedBookId string, t *testing.T) {
+	book := container.Get(bookServiceId, true).(mocks.Book)
+
+	if book.Id != expectedBookId {
+		t.Errorf(
+			"New method with 2 returns should return a book with id '%s', but none was returned",
+			expectedBookId,
+		)
+	}
+}
+
+func TestCheckNotFails(t *testing.T) {
+	cont := CreateContainer()
+	cont.Check()
 }

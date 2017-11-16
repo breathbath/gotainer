@@ -94,7 +94,12 @@ func TestNewMethodWithTwoReturnsHasAtLeastOneError(t *testing.T) {
 	cont.AddNewMethod("wrong_two_returns_with_no_error_dependency", someBadNewFunc)
 }
 
-func TestCorrectCheck(t *testing.T) {
+func TestNewMethodReturnError(t *testing.T) {
 	cont := CreateContainer()
-	cont.Check()
+	newMethodWithError := func() (error, interface{}) {
+		return errors.New("New method failed for some reason"), nil
+	}
+	cont.AddNewMethod("some_failing_newMethod", newMethodWithError)
+	defer ExpectPanic("New method failed for some reason", t)
+	cont.Get("some_failing_newMethod", true)
 }
