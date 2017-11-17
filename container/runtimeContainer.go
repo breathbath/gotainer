@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//RuntimeContainer creates services at runtime with registered callbacks
+//RuntimeContainer creates Services at runtime with registered callbacks
 type RuntimeContainer struct {
 	constructors    map[string]Constructor
 	cache           dependencyCache
@@ -17,27 +17,27 @@ func NewRuntimeContainer() *RuntimeContainer {
 	return &RuntimeContainer{constructors: make(map[string]Constructor), cache: newDependencyCache(), eventsContainer: NewEventsContainer()}
 }
 
-//AddConstructor registers a callback to create a service identified by id
+//AddConstructor registers a Callback to create a Service identified by id
 func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
 	rc.constructors[id] = constructor
 }
 
-//AddNewMethod converts a New service method to a valid callback constructor
+//AddNewMethod converts a New Service method to a valid Callback Constr
 func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
 	rc.constructors[id] = convertNewMethodToConstructor(rc, typedConstructor, constructorArgumentNames)
 }
 
-//AddDependencyObserver registers service that will receive dependencies it is interested in
+//AddDependencyObserver registers Service that will receive Config it is interested in
 func (rc *RuntimeContainer) AddDependencyObserver(eventName, observerId string, observer interface{}) {
 	rc.eventsContainer.addDependencyObserver(eventName, observerId, observer)
 }
 
-//RegisterDependencyEvent notifies observers about added dependencies
+//RegisterDependencyEvent notifies observers about added Config
 func (rc *RuntimeContainer) RegisterDependencyEvent(eventName, dependencyName string) {
 	rc.eventsContainer.registerDependencyEvent(eventName, dependencyName)
 }
 
-//Scan copies a service identified by id into a typed destination (its a pointer reference)
+//Scan copies a Service identified by id into a typed destination (its a pointer reference)
 func (rc *RuntimeContainer) Scan(id string, dest interface{}) {
 	baseValue := rc.Get(id, true)
 	err := copySourceVariableToDestinationVariable(baseValue, dest, id)
@@ -46,7 +46,7 @@ func (rc *RuntimeContainer) Scan(id string, dest interface{}) {
 	}
 }
 
-//ScanNonCached creates a service every time rc method is called
+//ScanNonCached creates a Service every time rc method is called
 func (rc *RuntimeContainer) ScanNonCached(id string, dest interface{}) {
 	baseValue := rc.Get(id, false)
 	err := copySourceVariableToDestinationVariable(baseValue, dest, id)
@@ -55,7 +55,7 @@ func (rc *RuntimeContainer) ScanNonCached(id string, dest interface{}) {
 	}
 }
 
-//Get fetches a service in a return argument
+//Get fetches a Service in a return argument
 func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
@@ -80,7 +80,7 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 	return service
 }
 
-//Check ensures that all runtime dependencies are created correctly
+//Check ensures that all runtime Config are created correctly
 func (rc *RuntimeContainer) Check() {
 	for dependencyName := range rc.constructors {
 		rc.Get(dependencyName, false)
@@ -92,7 +92,7 @@ func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 	for keyConstructor, constr := range c.getConstructors() {
 		if _, ok := rc.constructors[keyConstructor]; ok {
 			conflictingErrorMessage := fmt.Sprintf(
-				"Cannot merge containers because of non unique service id '%s'",
+				"Cannot merge containers because of non unique Service id '%s'",
 				keyConstructor,
 			)
 			panic(conflictingErrorMessage)

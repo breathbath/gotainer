@@ -38,7 +38,7 @@ func TestEventMerging(t *testing.T) {
 		funcToGetNotificationIsCalled = true
 		if service.(string) != "someServiceInstance" {
 			t.Errorf(
-				"Service '%s' with id '%s'rather than serivce '%s' should get a dependency notification grouped by event '%s' with dependency '%s' as context",
+				"Service '%s' with id '%s'rather than serivce '%s' should get a dependency notification grouped by Event '%s' with dependency '%s' as context",
 				"someServiceInstance",
 				service.(string),
 				"observerId2",
@@ -67,7 +67,7 @@ func TestEventMerging(t *testing.T) {
 
 	if !funcToGetNotificationIsCalled {
 		t.Errorf(
-			"Service '%s' with id '%s' should get a dependency notification grouped by event '%s' with dependency '%s' as context but none was received",
+			"Service '%s' with id '%s' should get a dependency notification grouped by Event '%s' with dependency '%s' as context but none was received",
 			"someServiceInstance",
 			"observerId2",
 			"event2",

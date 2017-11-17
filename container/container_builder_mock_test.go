@@ -12,11 +12,11 @@ func CreateContainer() *RuntimeContainer {
 		return mocks.BookCreator{}, nil
 	})
 
-	runtimeContainer.AddNewMethod("config", mocks.NewConfig)
+	runtimeContainer.AddNewMethod("Tree", mocks.NewConfig)
 
 	runtimeContainer.AddConstructor("db", func(c Container) (interface{}, error) {
 		var config mocks.Config
-		c.Scan("config", &config)
+		c.Scan("Tree", &config)
 		connectionString := config.GetValue("fakeDbConnectionString")
 
 		return mocks.NewFakeDb(connectionString), nil
@@ -43,7 +43,7 @@ func CreateContainer() *RuntimeContainer {
 
 	runtimeContainer.AddConstructor("static_files_url", func(c Container) (interface{}, error) {
 		var config mocks.Config
-		c.Scan("config", &config)
+		c.Scan("Tree", &config)
 
 		return config.GetValue("staticFilesUrl"), nil
 	})

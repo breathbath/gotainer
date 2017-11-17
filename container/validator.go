@@ -20,7 +20,7 @@ func assertArgumentsCount(reflectedConstructorFunc reflect.Value, expectedArgNum
 	argsInputCount := reflectedConstructorFunc.Type().NumIn()
 	if argsInputCount != expectedArgNumbersCount {
 		errName := fmt.Sprintf(
-			"The function requires %d dependencies, but %d arguments are provided",
+			"The function requires %d Config, but %d arguments are provided",
 			argsInputCount,
 			expectedArgNumbersCount,
 		)
@@ -38,7 +38,7 @@ func assertFunctionReturnValues(reflectedConstructorFunc reflect.Value) {
 
 	if constructorReturnsCount > 2 || constructorReturnsCount < 1 {
 		errName := fmt.Sprintf(
-			"constructor function should return 1 or 2 values, but %d values are returned",
+			"Constr function should return 1 or 2 values, but %d values are returned",
 			constructorReturnsCount,
 		)
 		panic(errors.New(errName))
@@ -51,7 +51,7 @@ func assertFunctionReturnValues(reflectedConstructorFunc reflect.Value) {
 		secondReflectedReturnValue = reflectedConstructorFunc.Type().Out(1)
 
 		if !isErrorType(secondReflectedReturnValue) && !isErrorType(firstReflectedReturnValue) {
-			panic(errors.New("constructor function with 2 returned values should return at least one error interface"))
+			panic(errors.New("Constr function with 2 returned values should return at least one error interface"))
 		}
 	}
 }
@@ -66,7 +66,7 @@ func assertConstructorArgumentsAreCompatible(
 	if reflectedConstructorArgument.Kind() != reflectedContainerDependency.Kind() ||
 		!reflectedConstructorArgument.ConvertibleTo(reflectedContainerDependency.Type()) {
 		errName := fmt.Sprintf(
-			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the constructor function call",
+			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the Constr function call",
 			dependencyName,
 			reflectedContainerDependency.Type(),
 			reflectedConstructorArgument,

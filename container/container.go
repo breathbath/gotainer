@@ -1,6 +1,6 @@
 package container
 
-//Container main interface for registering and fetching services
+//Container main interface for registering and fetching Services
 type Container interface {
 	AddConstructor(id string, constructor Constructor)
 	AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string)

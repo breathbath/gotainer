@@ -7,7 +7,7 @@ import (
 )
 
 func TestWrongMixedDependenciesInStaticCall(t *testing.T) {
-	defer ExpectPanic("Cannot use the provided dependency 'book_creator' of type 'mocks.BookCreator' as 'mocks.BookStorage' in the constructor function call", t)
+	defer ExpectPanic("Cannot use the provided dependency 'book_creator' of type 'mocks.BookCreator' as 'mocks.BookStorage' in the Constr function call", t)
 
 	cont := CreateContainer()
 	cont.AddNewMethod("anotherFinder", mocks.NewBookFinder, "book_creator", "book_storage")
@@ -24,7 +24,7 @@ func TestWrongDependencyRequested(t *testing.T) {
 }
 
 func TestIncompatibleInterfaces(t *testing.T) {
-	defer ExpectPanic("Cannot use the provided dependency 'incompatible_cache' of type 'mocks.IncompatibleCache' as 'mocks.Cache' in the constructor function call", t)
+	defer ExpectPanic("Cannot use the provided dependency 'incompatible_cache' of type 'mocks.IncompatibleCache' as 'mocks.Cache' in the Constr function call", t)
 	cont := CreateContainer()
 	cont.AddNewMethod("incompatible_cache", mocks.NewIncompatibleCache)
 	cont.AddNewMethod(
@@ -66,13 +66,13 @@ func TestFailureOnCustomConstructorError(t *testing.T) {
 
 func TestWrongArgumentsCountInNewMethod(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic("The function requires 2 dependencies, but 3 arguments are provided", t)
-	cont.AddNewMethod("wrong_arg_count_dependency", mocks.NewBookFinder, "book_storage", "book_creator", "config")
+	defer ExpectPanic("The function requires 2 Config, but 3 arguments are provided", t)
+	cont.AddNewMethod("wrong_arg_count_dependency", mocks.NewBookFinder, "book_storage", "book_creator", "Config")
 }
 
 func TestNewMethodIsNotFunc(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic("Destination object should be a constructor function rather than string", t)
+	defer ExpectPanic("Destination object should be a Constr function rather than string", t)
 	cont.AddNewMethod("wrong_arg_count_dependency", "non_func")
 }
 
@@ -81,7 +81,7 @@ func TestValidationOfReturnsCountInNewMethod(t *testing.T) {
 	someBadNewFunc := func() (int, error, bool){
 		return 1, errors.New("some error"), true
 	}
-	defer ExpectPanic("constructor function should return 1 or 2 values, but 3 values are returned", t)
+	defer ExpectPanic("Constr function should return 1 or 2 values, but 3 values are returned", t)
 	cont.AddNewMethod("wrong_return_count_dependency", someBadNewFunc)
 }
 
@@ -90,7 +90,7 @@ func TestNewMethodWithTwoReturnsHasAtLeastOneError(t *testing.T) {
 	someBadNewFunc := func() (int, bool){
 		return 1, true
 	}
-	defer ExpectPanic("constructor function with 2 returned values should return at least one error interface", t)
+	defer ExpectPanic("Constr function with 2 returned values should return at least one error interface", t)
 	cont.AddNewMethod("wrong_two_returns_with_no_error_dependency", someBadNewFunc)
 }
 

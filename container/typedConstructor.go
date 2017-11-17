@@ -2,13 +2,13 @@ package container
 
 import "reflect"
 
-//convertNewMethodToConstructor creates a callback that will call a New method of a service with the dependencies
+//convertNewMethodToConstructor creates a Callback that will call a New method of a Service with the Config
 //declared as newMethodArgumentNames.
 //Suppose we have func NewServiceA(sb ServiceB, sc ServiceC) ServiceA, if you call
-//convertNewMethodToConstructor(container, NewServiceA, "service_b", "service_c"), you will get a callback that will:
+//convertNewMethodToConstructor(container, NewServiceA, "service_b", "service_c"), you will get a Callback that will:
 //a) fetch "service_b" and "service_c" from the container
 //b) validate if type of "service_b" and "service_c" is convertable to the NewServiceA arguments
-//c) call NewServiceA with the results of container.Get("service_b") and container.Get("service_c")
+//Constr) call NewServiceA with the results of container.Get("service_b") and container.Get("service_c")
 func convertNewMethodToConstructor(container Container, newMethod interface{}, newMethodArgumentNames []string) Constructor {
 	reflectedNewMethod := reflect.ValueOf(newMethod)
 
@@ -47,8 +47,8 @@ func getErrorOrNil(value reflect.Value) error {
 	return err
 }
 
-//wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback converts something like func(observer Observer, dependency Dependency)
-// which is customObserverResolver to func(observer interface{}, dependency interface{}) which is serviceNotificationCallback
+//wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback converts something like func(Observer Observer, dependency Dependency)
+// which is customObserverResolver to func(Observer interface{}, dependency interface{}) which is serviceNotificationCallback
 //as customObserverResolver can be anything we need to make sure that function
 func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(customObserverResolver interface{}, eventName, observerId string) serviceNotificationCallback {
 	reflectedCustomObserverResolver := reflect.ValueOf(customObserverResolver)
@@ -71,8 +71,8 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(cus
 	}
 }
 
-//getValidFunctionArguments fetches dependencies by ids defined in newMethodArgumentNames and validates if they are convertable
-//to arguments of reflectedNewMethod which is a New method of a service provided in the AddNewMethod of the container
+//getValidFunctionArguments fetches Config by ids defined in newMethodArgumentNames and validates if they are convertable
+//to arguments of reflectedNewMethod which is a New method of a Service provided in the AddNewMethod of the container
 func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container) []reflect.Value {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
