@@ -16,9 +16,9 @@ type Observer struct {
 }
 
 type Node struct {
-	Constr  Constructor
-	NewFunc interface{}
-	Ss      Services
-	Ev      Event
-	Ob      Observer
+	Constr       Constructor
+	NewFunc      interface{}
+	ServiceNames Services
+	Ev           Event
+	Ob           Observer
 }

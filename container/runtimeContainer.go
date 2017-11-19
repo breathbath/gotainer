@@ -24,7 +24,7 @@ func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
 
 //AddNewMethod converts a New Service method to a valid Callback Constr
 func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-	rc.constructors[id] = convertNewMethodToConstructor(rc, typedConstructor, constructorArgumentNames)
+	rc.constructors[id] = convertNewMethodToConstructor(rc, typedConstructor, constructorArgumentNames, id)
 }
 
 //AddDependencyObserver registers Service that will receive Config it is interested in

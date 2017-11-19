@@ -61,7 +61,7 @@ The library covers the following use cases:
 
 ## Reusable services with dependencies
 
-Imagine we have 2 services dependant on an another one, which should be reused in both cases. The common service
+Imagine we have 2 services dependant on another one, which should be reused in both cases. The common service
 should be initialised only once as it has an internal state (e.g., db connection).
 
         //simple service with no dependencies

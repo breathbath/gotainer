@@ -9,13 +9,26 @@ import "reflect"
 //a) fetch "service_b" and "service_c" from the container
 //b) validate if type of "service_b" and "service_c" is convertable to the NewServiceA arguments
 //Constr) call NewServiceA with the results of container.Get("service_b") and container.Get("service_c")
-func convertNewMethodToConstructor(container Container, newMethod interface{}, newMethodArgumentNames []string) Constructor {
+func convertNewMethodToConstructor(
+	container Container,
+	newMethod interface{},
+	newMethodArgumentNames []string,
+	serviceId string,
+) Constructor {
+
 	reflectedNewMethod := reflect.ValueOf(newMethod)
 
-	assertFunctionDeclaredAsConstructor(reflectedNewMethod, newMethodArgumentNames)
-	assertFunctionReturnValues(reflectedNewMethod)
+	panicIfError(
+		assertFunctionDeclaration(reflectedNewMethod, len(newMethodArgumentNames), serviceId),
+	)
 
-	argumentsToCallConstructorFunc := getValidFunctionArguments(reflectedNewMethod, newMethodArgumentNames, container)
+	panicIfError(
+		validateConstructorReturnValues(reflectedNewMethod, serviceId),
+	)
+
+	argumentsToCallConstructorFunc, errors := getValidFunctionArguments(reflectedNewMethod, newMethodArgumentNames, container)
+
+	panicIfErrors(errors)
 
 	return func(c Container) (interface{}, error) {
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
@@ -52,19 +65,21 @@ func getErrorOrNil(value reflect.Value) error {
 //as customObserverResolver can be anything we need to make sure that function
 func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(customObserverResolver interface{}, eventName, observerId string) serviceNotificationCallback {
 	reflectedCustomObserverResolver := reflect.ValueOf(customObserverResolver)
-	assertIsFunction(reflectedCustomObserverResolver)
-	assertArgumentsCount(reflectedCustomObserverResolver, 2)
+	panicIfError(assertFunctionDeclaration(reflectedCustomObserverResolver, 2, observerId))
+
+	//here we redirect a call to func(Observer interface{}, dependency interface{}) into
+	// func(Observer Observer, dependency Dependency) which was given as customObserverResolver
 	return func(observer interface{}, dependency interface{}) {
 		argumentsToCallCustomerObserverResolver := make([]reflect.Value, 2)
 
 		reflectedObserver := reflect.ValueOf(observer)
 		reflectedFirstResolverArgument := reflectedCustomObserverResolver.Type().In(0)
-		assertConstructorArgumentsAreCompatible(reflectedFirstResolverArgument, reflectedObserver, observerId)
+		panicIfError(assertConstructorArgumentsAreCompatible(reflectedFirstResolverArgument, reflectedObserver, observerId))
 		argumentsToCallCustomerObserverResolver[0] = reflectedObserver
 
 		reflectedDependency := reflect.ValueOf(dependency)
 		reflectedSecondResolverArgument := reflectedCustomObserverResolver.Type().In(1)
-		assertConstructorArgumentsAreCompatible(reflectedSecondResolverArgument, reflectedDependency, eventName)
+		panicIfError(assertConstructorArgumentsAreCompatible(reflectedSecondResolverArgument, reflectedDependency, eventName))
 		argumentsToCallCustomerObserverResolver[1] = reflectedDependency
 
 		reflectedCustomObserverResolver.Call(argumentsToCallCustomerObserverResolver)
@@ -73,10 +88,11 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(cus
 
 //getValidFunctionArguments fetches Config by ids defined in newMethodArgumentNames and validates if they are convertable
 //to arguments of reflectedNewMethod which is a New method of a Service provided in the AddNewMethod of the container
-func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container) []reflect.Value {
+func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container) ([]reflect.Value, []error) {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
 
+	var errors []error
 	for i := 0; i < constructorInputCount; i++ {
 		reflectedNewMethodArgument := reflectedNewMethod.Type().In(i)
 
@@ -84,9 +100,17 @@ func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgume
 		dependencyFromContainer := container.Get(dependencyName, true)
 		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
 
-		assertConstructorArgumentsAreCompatible(reflectedNewMethodArgument, reflectedDependencyFromContainer, dependencyName)
-		argumentsToCallNewMethod[i] = reflectedDependencyFromContainer
+		err := assertConstructorArgumentsAreCompatible(
+			reflectedNewMethodArgument,
+			reflectedDependencyFromContainer,
+			dependencyName,
+		)
+		if err != nil {
+			errors = append(errors, err)
+		} else {
+			argumentsToCallNewMethod[i] = reflectedDependencyFromContainer
+		}
 	}
 
-	return argumentsToCallNewMethod
+	return argumentsToCallNewMethod, errors
 }

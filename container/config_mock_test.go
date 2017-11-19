@@ -2,21 +2,20 @@ package container
 
 import "github.com/breathbath/gotainer/container/mocks"
 
-func GetContainerConfig() *Tree {
-	return &Tree{
-		"Tree": Node{
+func getMockedConfigTree() Tree {
+	return Tree{
+		"config": Node{
 			NewFunc: mocks.NewConfig,
 		},
 		"connection_string": Node{
 			Constr: func(c Container) (interface{}, error) {
 				return c.Get("Tree", true).(string), nil
 			},
-			NewFunc: mocks.NewConfig,
 		},
-		"db": Node{NewFunc: mocks.NewFakeDb, Ss: Services{"connection_string"}},
+		"db": Node{NewFunc: mocks.NewFakeDb, ServiceNames: Services{"connection_string"}},
 		"book_finder_declared_statically": Node{
-			NewFunc: mocks.NewBookFinder,
-			Ss:      Services{"book_storage", "book_creator"},
+			NewFunc:      mocks.NewBookFinder,
+			ServiceNames: Services{"book_storage", "book_creator"},
 		},
 		"book_finder": Node{
 			Constr: func(c Container) (interface{}, error) {
@@ -30,8 +29,8 @@ func GetContainerConfig() *Tree {
 			},
 		},
 		"book_storage": Node{
-			NewFunc: mocks.NewBookStorage,
-			Ss:      Services{"db"},
+			NewFunc:      mocks.NewBookStorage,
+			ServiceNames: Services{"db"},
 		},
 		"book_storage_statistics_provider": Node{
 			Ev: Event{
@@ -40,8 +39,8 @@ func GetContainerConfig() *Tree {
 			},
 		},
 		"authors_storage": Node{
-			NewFunc: mocks.NewAuthorsStorage,
-			Ss:      Services{"db"},
+			NewFunc:      mocks.NewAuthorsStorage,
+			ServiceNames: Services{"db"},
 		},
 		"authors_storage_statistics_provider": Node{
 			Ev: Event{
@@ -67,8 +66,8 @@ func GetContainerConfig() *Tree {
 			},
 		},
 		"book_link_provider": Node{
-			NewFunc: mocks.NewBookLinkProvider,
-			Ss:      Services{"static_files_url", "book_finder_declared_statically"},
+			NewFunc:      mocks.NewBookLinkProvider,
+			ServiceNames: Services{"static_files_url", "book_finder_declared_statically"},
 		},
 		"web_fetcher":     Node{NewFunc: mocks.NewWebFetcher},
 		"in_memory_cache": Node{NewFunc: mocks.NewInMemoryCache},
