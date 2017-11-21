@@ -4,9 +4,11 @@ type RuntimeContainerBuilder struct{}
 
 func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) Container {
 	runtimeContainer := NewRuntimeContainer()
+	var tempContainer *RuntimeContainer
 
 	for _, tree := range trees {
-		runtimeContainer = rc.buildContainer(tree)
+		tempContainer = rc.buildContainer(tree)
+		runtimeContainer.Merge(tempContainer)
 	}
 
 	return runtimeContainer

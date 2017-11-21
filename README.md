@@ -46,6 +46,49 @@ If you already have a constructor function, you can add it to the container as w
 
         runtimeContainer.AddNewMethod("my_service", NewMyService)
 
+If you want to create a config file for your dependencies, use:
+
+        configTree := Tree{
+        		Node{
+        			NewFunc: mocks.NewConfig,
+        			Id:      "config",
+        		},
+        		Node{
+        			Id: "connection_string",
+        			Constr: func(c Container) (interface{}, error) {
+        				config := c.Get("config", true).(mocks.Config)
+        				return config.GetValue("fakeDbConnectionString"), nil
+        			},
+        		},
+        		Node{
+        			Id:           "db",
+        			NewFunc:      mocks.NewFakeDb,
+        			ServiceNames: Services{"connection_string"},
+        		},
+        		Node{
+        			Id: "authors_storage_statistics_provider",
+        			Ev: Event{
+        				Name:    "add_stats_provider",
+        				Service: "authors_storage",
+        			},
+        		},
+        		Node{Id: "statistics_gateway", NewFunc: mocks.NewStatisticsGateway},
+        		Node{
+        			Ob: Observer{
+        				Event: "add_stats_provider",
+        				Name:  "statistics_gateway",
+        				Callback: func(sg *mocks.StatisticsGateway, sp mocks.StatisticsProvider) {
+        					sg.AddStatisticsProvider(sp)
+        				},
+        			},
+        		},
+        	}
+
+        ...
+        builder := RuntimeContainerBuilder{}
+        //at this point you have a fully working container with dependencies from the config tree
+        container := builder.BuildContainerFromConfig(configTree)
+
 ## Fetching services
 Assuming that you already created a container and declared all needed services, you can start fetching them:
 
@@ -251,6 +294,13 @@ If your application is very big, you can declare small containers for your packa
 
             return *container
         }
+
+You can also merge dependencies configs into one result container like this:
+
+        treeFromModule1 := NewModuleOneConfigTree() //imagine this method returns container.Tree{}
+        treeFromModule2 := NewModuleTwoConfigTree()
+        //at this point your container will have dependencies from both treeFromModule1 and treeFromModule2
+        container := RuntimeContainerBuilder{}.BuildContainerFromConfig(treeFromModule1, treeFromModule2)
 
 Don't put container init logic into your main.go file as it might grow very big and will not be reusable.
 

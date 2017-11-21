@@ -52,4 +52,11 @@ func TestConfigMerge(t *testing.T) {
 	if book.Id != "someBook" {
 		t.Error("A wrongly working 'book_shelve' is returned from the container after config merge")
 	}
+
+	var connectionString string
+	container.Scan("connection_string", &connectionString)
+
+	if connectionString != "someConnectionString" {
+		t.Error("A wrong service declaration for 'connection_string' is returned from the container after config merge")
+	}
 }
