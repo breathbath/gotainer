@@ -18,7 +18,7 @@ func validateNode(node Node, errCollection *[]error, tree Tree) {
 	}
 
 	if len(node.ServiceNames) > 0 && node.NewFunc == nil {
-		registerNewErrorInCollection(errCollection, "Services list should be defined with a non empty new func", node.Id)
+		registerNewErrorInCollection(errCollection, "Services list should be defined with a non empty new func, see '%s'", node)
 		return
 	}
 
@@ -51,50 +51,48 @@ func validateNewFunc(node Node, errCollection *[]error) {
 	var err error
 	reflectedNewMethod := reflect.ValueOf(node.NewFunc)
 
-	err = assertFunctionDeclaration(reflectedNewMethod, len(node.ServiceNames), node.Id)
+	err = assertFunctionDeclaration(reflectedNewMethod, len(node.ServiceNames), node.String())
 	addErrorToCollection(errCollection, err)
 
 	err = validateConstructorReturnValues(reflectedNewMethod, node.Id)
 	addErrorToCollection(errCollection, err)
-	assertServiceIdIsNotEmpty(node, errCollection, "The new function should be provided with a service id")
+	assertServiceIdIsNotEmpty(node, errCollection, "The new function should be provided with a service id, see '%s'")
 }
 
 func validateConstrFunc(node Node, errCollection *[]error) {
 	assertNewIsEmpty(node, errCollection)
 	assertEventIsEmpty(node, errCollection)
 	assertObserverIsEmpty(node, errCollection)
-	assertServiceIdIsNotEmpty(node, errCollection, "The constructor function should be provided with a non empty service id")
+	assertServiceIdIsNotEmpty(node, errCollection, "The constructor function should be provided with a non empty service id, see '%s'")
 }
 
 func validateObserverDefinition(node Node, errCollection *[]error) {
-	observerText := fmt.Sprint(node.Ob)
 	if node.Ob.Name == "" {
-		registerNewErrorInCollection(errCollection, "Observer name is required", observerText)
+		registerNewErrorInCollection(errCollection, "Observer name is required, see '%s'", node)
 	}
 
 	if node.Ob.Callback == nil {
-		registerNewErrorInCollection(errCollection, "Observer callback is required", observerText)
+		registerNewErrorInCollection(errCollection, "Observer callback is required, see '%s'", node)
 	}
 
 	if node.Ob.Event == "" {
-		registerNewErrorInCollection(errCollection, "Observer event is required", observerText)
+		registerNewErrorInCollection(errCollection, "Observer event is required, see '%s'", node)
 	}
 
 	assertNewIsEmpty(node, errCollection)
 	assertEventIsEmpty(node, errCollection)
 	assertConstructorIsEmpty(node, errCollection)
 
-	err := assertFunctionDeclaration(reflect.ValueOf(node.Ob.Callback), 2, observerText)
+	err := assertFunctionDeclaration(reflect.ValueOf(node.Ob.Callback), 2, node.String())
 	addErrorToCollection(errCollection, err)
 }
 
 func validateEventDefinition(node Node, errCollection *[]error, tree Tree) {
-	eventText := fmt.Sprint(node.Ev)
 	if node.Ev.Name == "" {
-		registerNewErrorInCollection(errCollection, "Event name is required", eventText)
+		registerNewErrorInCollection(errCollection, "Event name is required, see '%s'", node)
 	}
 	if node.Ev.Service == "" {
-		registerNewErrorInCollection(errCollection, "Event service is required", eventText)
+		registerNewErrorInCollection(errCollection, "Event service is required, see '%s'", node)
 	}
 
 	assertNewIsEmpty(node, errCollection)
@@ -108,31 +106,32 @@ func validateEventDefinition(node Node, errCollection *[]error, tree Tree) {
 
 func assertNewIsEmpty(node Node, errCollection *[]error) {
 	if node.NewFunc != nil {
-		registerNewErrorInCollection(errCollection, "Unexpected new func declaration", node.Id)
+		registerNewErrorInCollection(errCollection, "Unexpected new func declaration, see '%s'", node)
 	}
 }
 
 func assertConstructorIsEmpty(node Node, errCollection *[]error) {
 	if node.Constr != nil {
-		registerNewErrorInCollection(errCollection, "Unexpected constructor declaration", node.Id)
+		registerNewErrorInCollection(errCollection, "Unexpected constructor declaration, see '%s'", node)
 	}
 }
 
 func assertEventIsEmpty(node Node, errCollection *[]error) {
 	if node.Ev.Name != "" {
-		registerNewErrorInCollection(errCollection, "Unexpected event declaration", node.Id)
+		registerNewErrorInCollection(errCollection, "Unexpected event declaration, see '%s'", node)
 	}
 }
 
 func assertObserverIsEmpty(node Node, errCollection *[]error) {
 	if node.Ob.Name != "" {
-		registerNewErrorInCollection(errCollection, "Unexpected observer declaration", node.Id)
+		registerNewErrorInCollection(errCollection, "Unexpected observer declaration, see '%s'", node)
 	}
 }
 
-func registerNewErrorInCollection(errCollection *[]error, errorText, itemId string) {
-	if itemId != "" {
-		errorText = errorText + ", see '" + itemId + "'"
+func registerNewErrorInCollection(errCollection *[]error, format string, context ...interface{}) {
+	errorText := format
+	if len(context) > 0 {
+		errorText = fmt.Sprintf(format, context...)
 	}
 	*errCollection = append(*errCollection, errors.New(errorText))
 }
@@ -150,9 +149,8 @@ func assertServiceIsDeclared(serviceName, declarationPlace string, tree Tree, er
 	}
 }
 
-func assertServiceIdIsNotEmpty(node Node, errCollection *[]error, errorText string) {
+func assertServiceIdIsNotEmpty(node Node, errCollection *[]error, errorFormat string) {
 	if node.Id == "" {
-		nodeText := fmt.Sprint(node)
-		registerNewErrorInCollection(errCollection, errorText, nodeText)
+		registerNewErrorInCollection(errCollection, errorFormat, node)
 	}
 }

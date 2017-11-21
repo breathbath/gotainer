@@ -22,7 +22,7 @@ func assertFunctionDeclaration(
 ) error {
 	if !isFunction(reflectedConstructorFunc) {
 		errName := fmt.Sprintf(
-			"A function is expected rather than '%s' in the service declaration '%s'",
+			"A function is expected rather than '%s', see '%s'",
 			reflectedConstructorFunc.Kind(),
 			serviceId,
 		)

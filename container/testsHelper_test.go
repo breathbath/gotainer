@@ -20,6 +20,6 @@ func ExpectPanic(expectedPanicName string, t *testing.T) {
 	}
 
 	if panicMessage != expectedPanicName {
-		t.Fatalf("Wrong panic message: '%s', expected message: '%s'", panicMessage, expectedPanicName)
+		t.Fatalf("\nWrong panic message:(-expected message, +provided message)\n- %s\n+ %s", expectedPanicName, panicMessage)
 	}
 }

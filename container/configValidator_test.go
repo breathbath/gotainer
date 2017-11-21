@@ -13,27 +13,28 @@ func TestDefaultIsValid(t *testing.T) {
 }
 
 func TestNewFunctionIsNotFunction(t *testing.T) {
+	node := Node{NewFunc: "abc", Id: "wrongNewAsString"}
 	assertWrongNodeDeclaration(
-		"A function is expected rather than 'string' in the service declaration 'wrongNewAsString'",
-		Node{NewFunc: "abc", Id: "wrongNewAsString"},
+		node,
 		t,
+		"A function is expected rather than 'string', see '%s'",
+		node,
 	)
 }
 
 func TestNewFunctionReturnsNoValues(t *testing.T) {
 	assertWrongNodeDeclaration(
-		"Constr function should return 1 or 2 values, but 0 values are returned [check 'wrongNewWrongReturnValues1' service]",
 		Node{
 			NewFunc: func() {},
-			Id: "wrongNewWrongReturnValues1",
-			},
+			Id:      "wrongNewWrongReturnValues1",
+		},
 		t,
+		"Constr function should return 1 or 2 values, but 0 values are returned [check 'wrongNewWrongReturnValues1' service]",
 	)
 }
 
 func TestNewFunctionReturnsNoErrors(t *testing.T) {
 	assertWrongNodeDeclaration(
-		"Constr function with 2 returned values should return at least one error interface [check 'wrongNewWrongReturnValues2' service]",
 		Node{
 			Id: "wrongNewWrongReturnValues2",
 			NewFunc: func() (string, int) {
@@ -41,164 +42,191 @@ func TestNewFunctionReturnsNoErrors(t *testing.T) {
 			},
 		},
 		t,
+		"Constr function with 2 returned values should return at least one error interface [check 'wrongNewWrongReturnValues2' service]",
 	)
 }
 
 func TestNewFunctionHasLessArgumentsThanServiceNamesCount(t *testing.T) {
-	assertWrongNodeDeclaration(
-		"The function requires 1 arguments, but 2 arguments are provided in the service declaration 'wrongArgumentsCount'",
-		Node{
-			Id: "wrongArgumentsCount",
-			NewFunc: func(a string) string {
-				return a
-			},
-			ServiceNames: Services{"a", "b"},
+	node := Node{
+		Id: "wrongArgumentsCount",
+		NewFunc: func(a string) string {
+			return a
 		},
+		ServiceNames: Services{"a", "b"},
+	}
+	assertWrongNodeDeclaration(
+		node,
 		t,
+		"The function requires 1 arguments, but 2 arguments are provided in the service declaration '%s'",
+		node,
 	)
 }
 
 func TestNewFunctionMissingId(t *testing.T) {
 	node := Node{
-		Id: "",
+		Id:      "",
 		NewFunc: mocks.NewConfig,
 	}
 
-	nodeText := fmt.Sprint(node)
 	assertWrongNodeDeclaration(
-		"The new function should be provided with a service id, see '" + nodeText + "'",
 		node,
 		t,
+		"The new function should be provided with a service id, see '%s'",
+		node,
 	)
 }
 
 func TestMoreDefinitionsForNewFunction(t *testing.T) {
-	assertWrongNodeDeclaration(
-		`Unexpected constructor declaration, see service 'moreDefinitionsForNewFunction';
-Unexpected event declaration, see service 'moreDefinitionsForNewFunction'`,
-		Node{
-			Id:      "moreDefinitionsForNewFunction",
-			NewFunc: mocks.NewConfig,
-			Ev:      Event{Name: "someEvent"},
-			Constr: func(c Container) (interface{}, error) {
-				return nil, nil
-			},
+	node := Node{
+		Id:      "moreDefinitionsForNewFunction",
+		NewFunc: mocks.NewConfig,
+		Ev:      Event{Name: "someEvent"},
+		Constr: func(c Container) (interface{}, error) {
+			return nil, nil
 		},
+	}
+	assertWrongNodeDeclaration(
+		node,
 		t,
+		"Unexpected constructor declaration, see '%s';\nUnexpected event declaration, see '%s'",
+		node,
+		node,
 	)
 }
 
 func TestMoreDeclarationsForConstrFunction(t *testing.T) {
+	node := 		Node{
+		Id:      "moreDefinitionsForConstrFunction",
+		NewFunc: mocks.NewConfig,
+		Ob:      Observer{Name: "someEvent"},
+	}
 	assertWrongNodeDeclaration(
-		"Unexpected observer declaration, see service 'moreDefinitionsForConstrFunction'",
-		Node{
-			Id:      "moreDefinitionsForConstrFunction",
-			NewFunc: mocks.NewConfig,
-			Ob:      Observer{Name: "someEvent"},
-		},
+		node,
 		t,
+		"Unexpected observer declaration, see '%s'",
+		node,
 	)
 }
 
 func TestNoIdForConstrFunction(t *testing.T) {
-	node := 		Node{
-		Id:      "",
+	node := Node{
+		Id: "",
 		Constr: func(c Container) (interface{}, error) {
 			return "", nil
 		},
 	}
 
 	assertWrongNodeDeclaration(
-		"The constructor function should be provided with a non empty service id, see '" + fmt.Sprint(node) + "'",
 		node,
 		t,
+		"The constructor function should be provided with a non empty service id, see '%s'",
+		node,
 	)
 }
 
 func TestServiceNamesProvidedWithoutNewFunc(t *testing.T) {
+	node := 		Node{
+		Id:           "serviceNamesWithoutNewFunc",
+		ServiceNames: []string{"someService"},
+	}
 	assertWrongNodeDeclaration(
-		"Services list should be defined with a non empty new func, see service 'serviceNamesWithoutNewFunc'",
-		Node{
-			Id:           "serviceNamesWithoutNewFunc",
-			ServiceNames: []string{"someService"},
-		},
+		node,
 		t,
+		"Services list should be defined with a non empty new func, see '%s'",
+		node,
 	)
 }
 
 func TestObserverRequiredFieldsNotProvided(t *testing.T) {
+	node := Node{
+		Ob: Observer{Event: "someEv", Name: "", Callback: "lsls"},
+	}
 	assertWrongNodeDeclaration(
-		`Observer name is required, see observer '';
-A function is expected rather than 'string' in the observer declaration ''`,
-		Node{
-			Ob: Observer{Event: "someEv", Name: "", Callback: "lsls"},
-		},
+		node,
 		t,
+		"Observer name is required, see '%s';\nA function is expected rather than 'string', see '%s'",
+		node,
+		node,
 	)
 
+	node = Node{
+		Ob: Observer{Event: "", Name: "someName", Callback: func(sg *mocks.StatisticsGateway, sp mocks.StatisticsProvider) {}},
+	}
 	assertWrongNodeDeclaration(
-		`Observer event is required, see observer 'someName'`,
-		Node{
-			Ob: Observer{Event: "", Name: "someName", Callback: func(sg *mocks.StatisticsGateway, sp mocks.StatisticsProvider) {}},
-		},
+		node,
 		t,
+		"Observer event is required, see '%s'",
+		node,
 	)
 
+	node = Node{
+		Ob: Observer{Event: "someEv", Name: "someName", Callback: nil},
+	}
 	assertWrongNodeDeclaration(
-		`Observer callback is required, see service 'observerRequiredFields';
-A function is expected rather than 'invalid' in the observer declaration 'observerRequiredFields'`,
-		Node{
-			Ob: Observer{Event: "someEv", Name: "someName", Callback: nil},
-		},
+		node,
 		t,
+		"Observer callback is required, see '%s';\nA function is expected rather than 'invalid', see '%s'",
+		node,
+		node,
 	)
 }
 
 func TestMoreDeclarationsForObserver(t *testing.T) {
+	node := Node{
+		Ob: Observer{Event: "someEv", Name: "someName", Callback: func(sg *mocks.StatisticsGateway, sp mocks.StatisticsProvider) {}},
+		Ev: Event{Name: "someEvent"},
+	}
 	assertWrongNodeDeclaration(
-		"Unexpected event declaration, see observer 'someName'",
-		Node{
-			Ob: Observer{Event: "someEv", Name: "someName", Callback: func(sg *mocks.StatisticsGateway, sp mocks.StatisticsProvider) {}},
-			Ev: Event{Name: "someEvent"},
-		},
+		node,
 		t,
+		"Unexpected event declaration, see '%s'",
+		node,
 	)
 }
 
 func TestEventRequiredFieldsNotProvided(t *testing.T) {
+	node := Node{
+		Ev: Event{Service: "config"},
+	}
 	assertWrongNodeDeclaration(
-		`Event name is required, see event 'eventRequiredFields'`,
-		Node{
-			Ev: Event{Service: "config"},
-		},
+		node,
 		t,
+		"Event name is required, see '%s'",
+		node,
 	)
 
+	node = Node{
+		Ev: Event{Name: "someEvent"},
+	}
 	assertWrongNodeDeclaration(
-		`Event service is required, see event 'someEvent'`,
-		Node{
-			Ev: Event{Name: "someEvent"},
-		},
+		node,
 		t,
+		"Event service is required, see '%s'",
+		node,
 	)
 }
 
 func TestUnknownEventServiceIsProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
-		`Unknown service declaration 'Some unknown service' in 'event someEvent'`,
 		Node{
 			Id: "unknownEventService",
 			Ev: Event{Name: "someEvent", Service: "Some unknown service"},
 		},
 		t,
+		"Unknown service declaration 'Some unknown service' in 'event someEvent'",
 	)
 }
 
-func assertWrongNodeDeclaration(expectedPanicMessage string, node Node, t *testing.T) {
+func assertWrongNodeDeclaration(node Node, t *testing.T, expectedErrorFormat string, context ...interface{}) {
 	configTree := getMockedConfigTree()
 	configTree = append(configTree, node)
-
-	defer ExpectPanic(expectedPanicMessage, t)
+	var errorText string
+	if len(context) > 0 {
+		errorText = fmt.Sprintf(expectedErrorFormat, context...)
+	} else {
+		errorText = expectedErrorFormat
+	}
+	defer ExpectPanic(errorText, t)
 
 	ValidateConfig(configTree)
 }
