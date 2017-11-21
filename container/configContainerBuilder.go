@@ -2,7 +2,7 @@ package container
 
 type RuntimeContainerBuilder struct{}
 
-func (rc RuntimeContainerBuilder) BuildContainer(trees ...Tree) Container {
+func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) Container {
 	runtimeContainer := NewRuntimeContainer()
 
 	for _, tree := range trees {

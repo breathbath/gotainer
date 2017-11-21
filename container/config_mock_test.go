@@ -21,14 +21,20 @@ func getMockedConfigTree() Tree {
 			ServiceNames: Services{"connection_string"},
 		},
 		Node{
-			Id:           "book_finder_declared_statically",
-			NewFunc:      mocks.NewBookFinder,
-			ServiceNames: Services{"book_storage", "book_creator"},
-		},
-		Node{
 			Id:           "book_storage",
 			NewFunc:      mocks.NewBookStorage,
 			ServiceNames: Services{"db"},
+		},
+		Node{
+			Id:           "book_creator",
+			Constr: func(c Container) (interface{}, error) {
+				return mocks.BookCreator{}, nil
+			},
+		},
+		Node{
+			Id:           "book_finder_declared_statically",
+			NewFunc:      mocks.NewBookFinder,
+			ServiceNames: Services{"book_storage", "book_creator"},
 		},
 		Node{
 			Id: "book_storage_statistics_provider",

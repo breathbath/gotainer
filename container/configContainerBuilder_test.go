@@ -7,7 +7,7 @@ import (
 
 func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
 	configTree := getMockedConfigTree()
-	container := RuntimeContainerBuilder{}.BuildContainer(configTree)
+	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
 
 	var config mocks.Config
 	container.Scan("config", &config)
@@ -30,5 +30,26 @@ func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
 	stats := statsGateway.CollectStatistics()
 	if stats["authors_count"] != 3 {
 		t.Error("A wrongly initialised 'statistics_gateway' is returned from the container")
+	}
+}
+
+func TestConfigMerge(t *testing.T) {
+	configTree := getMockedConfigTree()
+	configTreeToMerge := Tree{
+		Node{
+			NewFunc: mocks.NewBookShelve,
+			Id:      "book_shelve",
+		},
+	}
+
+	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree, configTreeToMerge)
+
+	var bookShelve mocks.BookShelve
+	container.Scan("book_shelve", &bookShelve)
+	bookShelve.Add(mocks.Book{Id:"someBook"})
+	book := bookShelve.GetBooks()[0]
+
+	if book.Id != "someBook" {
+		t.Error("A wrongly working 'book_shelve' is returned from the container after config merge")
 	}
 }
