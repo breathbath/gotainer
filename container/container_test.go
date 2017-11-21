@@ -95,6 +95,16 @@ func assertExpectedBookInContainer(container Container, bookServiceId, expectedB
 	}
 }
 
+func TestPointerDependency(t *testing.T) {
+	c := CreateContainer()
+	c.AddNewMethod("some_pointer_service", mocks.NewBookShelve)
+
+	var bookShelve *mocks.BookShelve
+	c.Scan("some_pointer_service", bookShelve)
+	book := mocks.Book{Id:"id"}
+	bookShelve.Add(book)
+}
+
 func TestCheckNotFails(t *testing.T) {
 	cont := CreateContainer()
 	cont.Check()

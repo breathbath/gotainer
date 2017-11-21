@@ -13,22 +13,24 @@ func copySourceVariableToDestinationVariable(createdDependency interface{}, dest
 	if destinationPointerValue.Kind() != reflect.Ptr {
 		return errors.New("must pass a pointer, not a value")
 	}
-	if destinationPointerValue.IsNil() {
-		return errors.New("nil pointer passed to destination")
-	}
+	//if destinationPointerValue.IsNil() {
+	//	return errors.New("nil pointer passed to destination")
+	//}
 
 	reflectedCreatedDependency := reflect.ValueOf(createdDependency)
 
 	destinationValue := reflect.Indirect(destinationPointerValue)
+	destinationValueType := destinationValue.Type()
 
 	if reflectedCreatedDependency.Kind() == reflect.Ptr && sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationPointerValue) {
 		reflectedCreatedDependencyIndirected := reflect.Indirect(reflectedCreatedDependency)
-		destinationValue.Set(reflectedCreatedDependencyIndirected.Convert(destinationValue.Type()))
+		convertedDependencyToDestinationValue := reflectedCreatedDependencyIndirected.Convert(destinationValueType)
+		destinationValue.Set(convertedDependencyToDestinationValue)
 		return nil
 	}
 
 	if sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationValue) {
-		destinationValue.Set(reflectedCreatedDependency.Convert(destinationValue.Type()))
+		destinationValue.Set(reflectedCreatedDependency.Convert(destinationValueType))
 		return nil
 	}
 
