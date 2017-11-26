@@ -11,10 +11,10 @@ import (
 func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
 	destinationPointerValue := reflect.ValueOf(destination)
 	if destinationPointerValue.Kind() != reflect.Ptr {
-		return errors.New("must pass a pointer, not a value")
+		return errors.New("Please provide a pointer variable rather than a value")
 	}
 	if destinationPointerValue.IsNil() {
-		return errors.New("nil pointer passed to destination")
+		return errors.New("Please provide an initialsed variable rather than a non-initialised pointer variable")
 	}
 
 	reflectedCreatedDependency := reflect.ValueOf(createdDependency)

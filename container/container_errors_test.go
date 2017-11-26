@@ -107,3 +107,17 @@ func TestNewMethodReturnError(t *testing.T) {
 	defer ExpectPanic("New method failed for some reason", t)
 	cont.Get("some_failing_newMethod", true)
 }
+
+func TestNonPointerVariableDestination(t *testing.T) {
+	cont := CreateContainer()
+	var url string
+	defer ExpectPanic("Please provide a pointer variable rather than a value", t)
+	cont.Scan("static_files_url", url)
+}
+
+func TestNonInitialisedPointerVariableDestination(t *testing.T) {
+	cont := CreateContainer()
+	var url *string
+	defer ExpectPanic("Please provide an initialsed variable rather than a non-initialised pointer variable", t)
+	cont.Scan("static_files_url", url)
+}
