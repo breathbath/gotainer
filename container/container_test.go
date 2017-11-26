@@ -3,6 +3,9 @@ package container
 import (
 	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	_ "reflect"
+	_ "fmt"
+	"reflect"
 )
 
 func TestAllPresetDefinitions(t *testing.T) {
@@ -95,14 +98,63 @@ func assertExpectedBookInContainer(container Container, bookServiceId, expectedB
 	}
 }
 
+type A struct {
+	A1 int
+}
+
 func TestPointerDependency(t *testing.T) {
 	c := CreateContainer()
 	c.AddNewMethod("some_pointer_service", mocks.NewBookShelve)
 
-	var bookShelve *mocks.BookShelve
-	c.Scan("some_pointer_service", bookShelve)
-	book := mocks.Book{Id:"id"}
+	//var a *A
+	//b := A{1}
+	//va := reflect.ValueOf(&a).Elem()
+	//v := reflect.New(va.Type().Elem())
+	//vb := reflect.ValueOf(&b).Elem()
+	//vbIndirect := reflect.Indirect(vb)
+	//vba := vbIndirect.Convert(reflect.TypeOf(a).Elem())
+	//va.Set(v)
+	//
+	//
+	//fmt.Println(vba)
+	//return
+	//	var bookShelve *mocks.BookShelve
+	//
+	//	intType := reflect.TypeOf(bookShelve).Elem()
+	//	intPtr2 := reflect.New(intType)
+	//	//book := mocks.Book{Id:"id"}
+	//	//bookShelve.Add(book)
+	//
+	//	//bbb := intPtr2.Elem().Interface().(mocks.BookShelve)
+	//return
+
+	//var a *string
+	//c.Scan("static_files_url", a)
+	//fmt.Println(a)
+	//return
+
+	var bookShelve mocks.BookShelve
+	conv(&bookShelve)
+	//va := reflect.ValueOf(&bookShelve).Elem()
+	//v := reflect.New(va.Type().Elem())
+	//va.Set(v)
+	c.Scan("some_pointer_service", &bookShelve)
+
+	//var bookShelve *mocks.BookShelve
+	//c.Scan("some_pointer_service", bookShelve)
+	book := mocks.Book{Id: "id"}
 	bookShelve.Add(book)
+
+	bookReturned := bookShelve.GetBooks()[0]
+	if bookReturned.Id != "id" {
+		t.Errorf("Returned pointer object has a wrong type")
+	}
+}
+
+func conv(lal *mocks.BookShelve) {
+	va := reflect.ValueOf(&lal).Elem()
+	v := reflect.New(va.Type().Elem())
+	va.Set(v)
 }
 
 func TestCheckNotFails(t *testing.T) {

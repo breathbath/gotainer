@@ -4,40 +4,77 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"github.com/breathbath/gotainer/container/mocks"
 )
 
 //copySourceVariableToDestinationVariable copies a dependency fetched from the container
 //to the pointer reference provided as dest in Scan or ScanNonCached of the container
 func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
-	destinationPointerValue := reflect.ValueOf(destination)
-	if destinationPointerValue.Kind() != reflect.Ptr {
-		return errors.New("must pass a pointer, not a value")
+	reflectedDestinationValue := reflect.ValueOf(destination)
+	if reflectedDestinationValue.Kind() != reflect.Ptr {
+		return errors.New("Cannot set value to a non pointer variable")
 	}
-	//if destinationPointerValue.IsNil() {
-	//	return errors.New("nil pointer passed to destination")
-	//}
 
 	reflectedCreatedDependency := reflect.ValueOf(createdDependency)
 
-	destinationValue := reflect.Indirect(destinationPointerValue)
-	destinationValueType := destinationValue.Type()
+	if reflectedDestinationValue.IsNil() {
+		d := destination.(*mocks.BookShelve)
+		va := reflect.ValueOf(&d).Elem()
+		v := reflect.New(va.Type().Elem())
+		va.Set(v)
+		reflectedDestinationValue = reflect.ValueOf(d)
+		//va := reflect.ValueOf(&destination).Elem()
+		//v := reflect.New(va.Type().Elem())
+		//va.Set(v)
+		//reflectedDestinationValue = va
+		//intType := reflect.TypeOf(&destination).Elem()
+		////intPtr2 := reflect.New(intType)
+		//
+		////indirectedCreatedDependency := reflect.Indirect(reflectedCreatedDependency)
+		//indirectedCreatedDependency := reflect.Indirect(reflectedCreatedDependency)
+		////indirectedReflectedDestinationValue := intPtr2.Elem()
+		//convertedDependencyToDestinationValue := indirectedCreatedDependency.Convert(intType)
+		//reflect.ValueOf(destination).Set(convertedDependencyToDestinationValue)
+		//return nil
+		//rrr := reflect.TypeOf(destination).Elem()
+		//rrr2 := reflect.New(rrr)
+		//rrr3 := rrr2.Elem().Interface().(mocks.BookShelve)
+		//
+		//destType := reflect.TypeOf(&destination).Elem()
+		//indirectedCreatedDependency := reflect.Indirect(reflectedCreatedDependency)
+		//convertedDependencyToDestinationValue := indirectedCreatedDependency.Convert(destType)
+		//indirectedReflectedDestinationValue := reflect.Indirect(reflect.ValueOf(destination))
+		//indirectedReflectedDestinationValue.Set(convertedDependencyToDestinationValue)
 
-	if reflectedCreatedDependency.Kind() == reflect.Ptr && sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationPointerValue) {
-		reflectedCreatedDependencyIndirected := reflect.Indirect(reflectedCreatedDependency)
-		convertedDependencyToDestinationValue := reflectedCreatedDependencyIndirected.Convert(destinationValueType)
-		destinationValue.Set(convertedDependencyToDestinationValue)
+		//reflectedDestinationValue = reflect.ValueOf(destination).Elem()
+		//reflectedDestinationValue = reflect.New(reflectedDestinationValue.Type().Elem())
+		//indirectedReflectedDestinationValue1 := reflect.Indirect(reflectedDestinationValue)
+		//destinationValueType1 := indirectedReflectedDestinationValue1.Type()
+		//indirectedReflectedDestinationValue1.Set(reflectedCreatedDependency.Convert(destinationValueType1))
+		//return nil
+		//fmt.Println(destination)
+		//return errors.New("nil pointer passed to destination")
+	}
+
+	indirectedReflectedDestinationValue := reflect.Indirect(reflectedDestinationValue)
+	destinationValueType := indirectedReflectedDestinationValue.Type()
+
+	if reflectedCreatedDependency.Kind() == reflect.Ptr && sourceCanBeCopiedToDestination(reflectedCreatedDependency, reflectedDestinationValue) {
+		indirectedCreatedDependency := reflect.Indirect(reflectedCreatedDependency)
+		convertedDependencyToDestinationValue := indirectedCreatedDependency.Convert(destinationValueType)
+		indirectedReflectedDestinationValue.Set(convertedDependencyToDestinationValue)
 		return nil
 	}
 
-	if sourceCanBeCopiedToDestination(reflectedCreatedDependency, destinationValue) {
-		destinationValue.Set(reflectedCreatedDependency.Convert(destinationValueType))
+	if sourceCanBeCopiedToDestination(reflectedCreatedDependency, indirectedReflectedDestinationValue) {
+		indirectedReflectedDestinationValue.Set(reflectedCreatedDependency.Convert(destinationValueType))
 		return nil
 	}
 
 	errStr := fmt.Sprintf(
 		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s",
 		reflectedCreatedDependency.Type().Name(),
-		destinationValue.Type().Name(),
+		indirectedReflectedDestinationValue.Type().Name(),
 		dependencyName,
 	)
 
