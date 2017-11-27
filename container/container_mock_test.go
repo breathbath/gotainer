@@ -34,3 +34,7 @@ func (ci *ContainerInterfaceMock) Check() {
 func (ci *ContainerInterfaceMock) SetServiceToReturn (service interface{}) {
 	ci.service =  service
 }
+
+func (ci *ContainerInterfaceMock) Exists(id string) bool {
+	return true
+}

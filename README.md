@@ -260,6 +260,35 @@ This has following advantages:
 MonitoringProvider in other packages, so you are able to plug them in individually in every application with no need to change the
 core code.
 
+# Parameters
+
+Parameters are simple dependencies, that are already created and initialised with some values. A typical example is a classical application config,
+containing many different parameters, that you would probably prefer to use as a service. Gotainer provides a very useful helper function,
+that allows to add parameters packed in a map[string] interface{} data. Consider following example:
+
+        //e.g. map[string] string {"password": "123456", "proxy": "127.0.0.1:8888"}
+        type Config map[string] string
+        ...
+        //some custom function that converts json to Config type
+        config := fetchFromFile("config.json")
+        ...
+        //some custom function to created container
+        container := createContainer()
+
+        //this adds each map key/value pair as a single service so each of it can be addressed by it's name
+        RegisterParameters(container, config)
+
+        //proxyConnectionStr has now "127.0.0.1:8888"
+        proxyConnectionStr := container.Get("proxy").(string)
+
+        //or you can use it as a dependency
+        c.AddConstructor("pass_checker", func(c Container) (interface{}, error) {
+            var password string
+            c.Scan("password", &password)
+            //some custom class that checks if password provided by user is correct
+            return PasswordChecker{correctPassword: password), nil
+        })
+
 
 # Good practices
 

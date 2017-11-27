@@ -8,6 +8,7 @@ type Container interface {
 	ScanNonCached(id string, dest interface{})
 	Get(id string, isCached bool) interface{}
 	Check()
+	Exists(id string) bool
 }
 
 //MergeableContainer containers that support merging

@@ -87,6 +87,12 @@ func (rc *RuntimeContainer) Check() {
 	}
 }
 
+//Check ensures that all runtime Config are created correctly
+func (rc *RuntimeContainer) Exists(id string) bool {
+	_, exists := rc.constructors[id]
+	return exists
+}
+
 //Merge allows to merge containers
 func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 	for keyConstructor, constr := range c.getConstructors() {

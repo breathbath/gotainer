@@ -99,3 +99,14 @@ func TestCheckNotFails(t *testing.T) {
 	cont := CreateContainer()
 	cont.Check()
 }
+
+func TestExistsFunction(t *testing.T) {
+	cont := CreateContainer()
+	if !cont.Exists("book_storage") {
+		t.Errorf("The service '%s' should exist", "book_storage")
+	}
+
+	if cont.Exists("some_non_existing_service") {
+		t.Errorf("The service '%s' should not exist", "some_non_existing_service")
+	}
+}
