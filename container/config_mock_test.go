@@ -26,7 +26,7 @@ func getMockedConfigTree() Tree {
 			ServiceNames: Services{"db"},
 		},
 		Node{
-			Id:           "book_creator",
+			Id: "book_creator",
 			Constr: func(c Container) (interface{}, error) {
 				return mocks.BookCreator{}, nil
 			},
@@ -93,5 +93,17 @@ func getMockedConfigTree() Tree {
 		},
 		Node{Id: "web_fetcher", NewFunc: mocks.NewWebFetcher},
 		Node{Id: "in_memory_cache", NewFunc: mocks.NewInMemoryCache},
+		Node {
+			Parameters: map[string]interface{}{
+				"param1": "value1",
+				"param2": 123,
+			},
+			ParamProvider: mocks.ConfigProvider{},
+		},
+		Node {
+			Id: "logger",
+			NewFunc:      mocks.BuildLogger,
+			ServiceNames: Services{"EnableLogging"},
+		},
 	}
 }

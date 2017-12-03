@@ -33,6 +33,13 @@ func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer
 	} else if node.Ob.Name != "" {
 		rc.addObserver(node.Ob.Event, node.Ob.Name, node.Ob.Callback, container)
 	}
+
+	if node.Parameters != nil {
+		rc.addParameters(node.Parameters, container)
+	}
+	if node.ParamProvider != nil {
+		rc.addParametersProvider(node.ParamProvider, container)
+	}
 }
 
 func (rc RuntimeContainerBuilder) addNewFunc(serviceId string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {
@@ -49,4 +56,13 @@ func (rc RuntimeContainerBuilder) addEvent(eventName, dependencyName string, con
 
 func (rc RuntimeContainerBuilder) addObserver(eventName, observerId string, callback interface{}, container *RuntimeContainer) {
 	container.AddDependencyObserver(eventName, observerId, callback)
+}
+
+func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{}, container *RuntimeContainer) {
+	RegisterParameters(container, parameters)
+}
+
+func (rc RuntimeContainerBuilder) addParametersProvider(parametersProvider ParametersProvider, container *RuntimeContainer) {
+	parameters := parametersProvider.GetItems()
+	rc.addParameters(parameters, container)
 }

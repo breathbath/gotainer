@@ -33,6 +33,29 @@ func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
 	}
 }
 
+func TestParameters(t *testing.T) {
+	configTree := getMockedConfigTree()
+	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
+
+	AssertExpectedDependency(container, "param1", "value1", t)
+	AssertExpectedDependency(container, "param2", 123, t)
+	AssertExpectedDependency(container, "EnableLogging", true, t)
+
+	var logger mocks.InMemoryLogger
+	container.Scan("logger", &logger)
+	logger.Log("message")
+
+	expectedResult :=  "message"
+	providedResult := logger.GetMessages()[0]
+	if providedResult != expectedResult {
+		t.Errorf(
+			"Unexpected logged result %s, expected result is %s",
+			providedResult,
+			expectedResult,
+		)
+	}
+}
+
 func TestConfigMerge(t *testing.T) {
 	configTree := getMockedConfigTree()
 	configTreeToMerge := Tree{
@@ -46,7 +69,7 @@ func TestConfigMerge(t *testing.T) {
 
 	var bookShelve mocks.BookShelve
 	container.Scan("book_shelve", &bookShelve)
-	bookShelve.Add(mocks.Book{Id:"someBook"})
+	bookShelve.Add(mocks.Book{Id: "someBook"})
 	book := bookShelve.GetBooks()[0]
 
 	if book.Id != "someBook" {

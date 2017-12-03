@@ -32,6 +32,10 @@ type Observer struct {
 	Callback interface{}
 }
 
+type ParametersProvider interface {
+	GetItems() map[string]interface{}
+}
+
 func (o Observer) String() string {
 	return fmt.Sprintf(
 		"{Name: %s; Event: %s;}",
@@ -41,12 +45,14 @@ func (o Observer) String() string {
 }
 
 type Node struct {
-	Id           string
-	Constr       Constructor
-	NewFunc      interface{}
-	ServiceNames Services
-	Ev           Event
-	Ob           Observer
+	Id            string
+	Constr        Constructor
+	NewFunc       interface{}
+	ServiceNames  Services
+	Ev            Event
+	Ob            Observer
+	Parameters    map[string]interface{}
+	ParamProvider ParametersProvider
 }
 
 func (n Node) String() string {

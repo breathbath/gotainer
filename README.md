@@ -260,11 +260,12 @@ This has following advantages:
 MonitoringProvider in other packages, so you are able to plug them in individually in every application with no need to change the
 core code.
 
-# Parameters
+## Parameters
 
-Parameters are simple dependencies, that are already created and initialised with some values. A typical example is a classical application config,
-containing many different parameters, that you would probably prefer to use as a service. Gotainer provides a very useful helper function,
-that allows to add parameters packed in a map[string] interface{} data. Consider following example:
+Parameters are simple scalar values, that are already defined and can be used as dependencies. A typical example is an application config with
+e.g. db connection details, proxy url or folder paths. Obviously you can have a service that requires parameters in a construction
+function. Gotainer provides a useful helper function, that allows to add parameters as a `map[string] interface{}`.
+Consider following example:
 
         //e.g. map[string] string {"password": "123456", "proxy": "127.0.0.1:8888"}
         type Config map[string] string
@@ -272,13 +273,12 @@ that allows to add parameters packed in a map[string] interface{} data. Consider
         //some custom function that converts json to Config type
         config := fetchFromFile("config.json")
         ...
-        //some custom function to created container
         container := createContainer()
 
-        //this adds each map key/value pair as a single service so each of it can be addressed by it's name
+        //this adds each map key/value pair as a single parameter, so each of it can be addressed by it's name
         RegisterParameters(container, config)
 
-        //proxyConnectionStr has now "127.0.0.1:8888"
+        //proxyConnectionStr is now "127.0.0.1:8888"
         proxyConnectionStr := container.Get("proxy").(string)
 
         //or you can use it as a dependency
@@ -289,6 +289,36 @@ that allows to add parameters packed in a map[string] interface{} data. Consider
             return PasswordChecker{correctPassword: password), nil
         })
 
+        //or like this
+        c.AddNewMethod("pass_checker", NewPassChecker, "password")
+
+You can also declare parameters in a dependency config:
+
+        //statically
+        ...
+        Node {
+            Parameters: map[string]interface{}{
+                "param1": "value1",
+                "param2": 123,
+            },
+        },
+       ...
+
+       //or dynamically via interface
+        type ConfigProvider struct{}
+
+        //implements container.ParametersProvider
+        func (cp ConfigProvider) GetItems() map[string]interface{} {
+            return map[string]interface{}{
+                "EnableLogging": true,
+            }
+        }
+
+        ...
+        Node {
+            ParamProvider: ConfigProvider{},
+        },
+        ...
 
 # Good practices
 
@@ -307,7 +337,7 @@ that allows to add parameters packed in a map[string] interface{} data. Consider
         }
 
 If your application has other libraries that use the container, you can merge all dependency declarations into one.
-If your application is very big, you can declare small containers for your packages merge them in your main container method.
+If your application is big, you can declare small containers for your packages merge them in your main container method.
 
         package app_container
 

@@ -43,6 +43,14 @@ func TestParametersAdding(t *testing.T) {
 	AssertExpectedDependency(c, "paramStringPointer1", &stringPointer, t)
 }
 
+func TestIgnoringNilValues(t *testing.T) {
+	c := CreateContainer()
+	nilParams := map[string] map[int]int {
+		"nilParam": {},
+	}
+	RegisterParameters(c, nilParams)
+}
+
 func TestFailingForNonMapInput(t *testing.T) {
 	c := CreateContainer()
 	err := RegisterParameters(c, "some_string")
