@@ -63,6 +63,11 @@ func TestConfigMerge(t *testing.T) {
 			NewFunc: mocks.NewBookShelve,
 			Id:      "book_shelve",
 		},
+		Node{
+			NewFunc: mocks.NewBookRevision,
+			Id:      "book_revision",
+			ServiceNames:Services{"book_finder_declared_statically"},
+		},
 	}
 
 	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree, configTreeToMerge)
