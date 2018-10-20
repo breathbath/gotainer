@@ -23,8 +23,7 @@ func CreateContainer() *RuntimeContainer {
 	})
 
 	runtimeContainer.AddConstructor("book_storage", func(c Container) (interface{}, error) {
-		var db mocks.FakeDb
-		c.Scan("db", &db)
+		db := c.Get("db", true).(*mocks.FakeDb)
 		return mocks.NewBookStorage(db), nil
 	})
 	runtimeContainer.RegisterDependencyEvent("statistics_provider", "book_storage")

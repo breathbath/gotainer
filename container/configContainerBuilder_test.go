@@ -1,13 +1,12 @@
 package container
 
 import (
-	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
-	configTree := getMockedConfigTree()
-	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
+	container := buildContainerFromMockedConfig()
 
 	var config mocks.Config
 	container.Scan("config", &config)
@@ -34,8 +33,7 @@ func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
 }
 
 func TestParameters(t *testing.T) {
-	configTree := getMockedConfigTree()
-	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
+	container := buildContainerFromMockedConfig()
 
 	AssertExpectedDependency(container, "param1", "value1", t)
 	AssertExpectedDependency(container, "param2", 123, t)
@@ -45,7 +43,7 @@ func TestParameters(t *testing.T) {
 	container.Scan("logger", &logger)
 	logger.Log("message")
 
-	expectedResult :=  "message"
+	expectedResult := "message"
 	providedResult := logger.GetMessages()[0]
 	if providedResult != expectedResult {
 		t.Errorf(
@@ -64,9 +62,9 @@ func TestConfigMerge(t *testing.T) {
 			Id:      "book_shelve",
 		},
 		Node{
-			NewFunc: mocks.NewBookRevision,
-			Id:      "book_revision",
-			ServiceNames:Services{"book_finder_declared_statically"},
+			NewFunc:      mocks.NewBookRevision,
+			Id:           "book_revision",
+			ServiceNames: Services{"book_finder_declared_statically"},
 		},
 	}
 
@@ -86,5 +84,25 @@ func TestConfigMerge(t *testing.T) {
 
 	if connectionString != "someConnectionString" {
 		t.Error("A wrong service declaration for 'connection_string' is returned from the container after config merge")
+	}
+}
+
+func TestConfigGarbageCollectionSuccess(t *testing.T) {
+	container := buildContainerFromMockedConfig()
+	fakeDb := container.Get("db", true).(*mocks.FakeDb)
+
+	if fakeDb.WasDestroyed() {
+		t.Error("FakeDb should not have been destroyed before the garbage collect call")
+		return
+	}
+
+	err := container.CollectGarbage()
+	if err != nil {
+		t.Errorf("Unexpected error %v during the garbage collection", err)
+		return
+	}
+
+	if !fakeDb.WasDestroyed() {
+		t.Error("FakeDb should have been destroyed after the garbage collect call")
 	}
 }

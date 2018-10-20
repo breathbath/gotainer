@@ -1,13 +1,12 @@
 package container
 
-
 type ServiceRequestMock struct {
-	id string
+	id       string
 	isCached bool
 }
 type ContainerInterfaceMock struct {
 	ServicesRequested []ServiceRequestMock
-	service interface{}
+	service           interface{}
 }
 
 func (ci *ContainerInterfaceMock) AddConstructor(id string, constructor Constructor) {
@@ -24,17 +23,24 @@ func (ci *ContainerInterfaceMock) ScanNonCached(id string, dest interface{}) {
 }
 func (ci *ContainerInterfaceMock) Get(id string, isCached bool) interface{} {
 	ci.ServicesRequested = []ServiceRequestMock{}
-	ci.ServicesRequested = append(ci.ServicesRequested, ServiceRequestMock{id:id, isCached: isCached})
+	ci.ServicesRequested = append(ci.ServicesRequested, ServiceRequestMock{id: id, isCached: isCached})
 	return ci.service
 }
 func (ci *ContainerInterfaceMock) Check() {
 
 }
 
-func (ci *ContainerInterfaceMock) SetServiceToReturn (service interface{}) {
-	ci.service =  service
+func (ci *ContainerInterfaceMock) SetServiceToReturn(service interface{}) {
+	ci.service = service
 }
 
 func (ci *ContainerInterfaceMock) Exists(id string) bool {
 	return true
+}
+
+func (ci *ContainerInterfaceMock) AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc) {
+}
+
+func (ci *ContainerInterfaceMock) CollectGarbage() error {
+	return nil
 }

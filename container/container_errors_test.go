@@ -61,6 +61,17 @@ func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
 	cont.Check()
 }
 
+func TestCheckFailingForInvalidGarbageCollectionDeclaration(t *testing.T) {
+	defer ExpectPanic("Unknown dependency 'some_unknown_service'", t)
+	cont := CreateContainer()
+	garbageCollector := func(service interface{}) error {
+		return nil
+	}
+	cont.AddGarbageCollectFunc("some_unknown_service", garbageCollector)
+
+	cont.Check()
+}
+
 func TestFailureOnCustomConstructorError(t *testing.T) {
 	cont := CreateContainer()
 	cont.AddConstructor("some_failing_constructor", func(c Container) (interface{}, error) {

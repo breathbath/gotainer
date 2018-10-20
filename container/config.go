@@ -53,6 +53,7 @@ type Node struct {
 	Ob            Observer
 	Parameters    map[string]interface{}
 	ParamProvider ParametersProvider
+	GarbageFunc   GarbageCollectorFunc
 }
 
 func (n Node) String() string {

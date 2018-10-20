@@ -35,6 +35,10 @@ func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer
 	if node.ParamProvider != nil {
 		rc.addParametersProvider(node.ParamProvider, container)
 	}
+
+	if node.GarbageFunc != nil {
+		container.AddGarbageCollectFunc(node.Id, node.GarbageFunc)
+	}
 }
 
 func (rc RuntimeContainerBuilder) addNewFunc(serviceId string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {

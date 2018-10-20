@@ -2,18 +2,25 @@ package container
 
 import (
 	"fmt"
+	"strings"
 )
 
 //RuntimeContainer creates Services at runtime with registered callbacks
 type RuntimeContainer struct {
-	constructors    map[string]Constructor
-	cache           dependencyCache
-	eventsContainer *EventsContainer
+	constructors      map[string]Constructor
+	cache             dependencyCache
+	eventsContainer   *EventsContainer
+	garbageCollectors map[string]GarbageCollectorFunc
 }
 
 //NewRuntimeContainer creates container
 func NewRuntimeContainer() *RuntimeContainer {
-	return &RuntimeContainer{constructors: make(map[string]Constructor), cache: newDependencyCache(), eventsContainer: NewEventsContainer()}
+	return &RuntimeContainer{
+		constructors:      make(map[string]Constructor),
+		cache:             newDependencyCache(),
+		eventsContainer:   NewEventsContainer(),
+		garbageCollectors: make(map[string]GarbageCollectorFunc),
+	}
 }
 
 //AddConstructor registers a Callback to create a Service identified by id
@@ -83,6 +90,8 @@ func (rc *RuntimeContainer) Check() {
 	for dependencyName := range rc.constructors {
 		rc.Get(dependencyName, false)
 	}
+
+	rc.CollectGarbage()
 }
 
 //Check ensures that all runtime Config are created correctly
@@ -109,6 +118,29 @@ func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 	}
 
 	rc.eventsContainer.merge(c.getEventsContainer())
+}
+
+//AddGarbageCollectFunc registers a garbage collection function to destroy a service resources
+func (rc *RuntimeContainer) AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc) {
+	rc.garbageCollectors[serviceName] = gcFunc
+}
+
+//CollectGarbage will call all registered garbage collection functions and return the aggregated error result
+func (rc *RuntimeContainer) CollectGarbage() error {
+	errs := []string{}
+	for serviceName, gcFunc := range rc.garbageCollectors {
+		service := rc.Get(serviceName, true)
+		err := gcFunc(service)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("Garbage collection errors: %s", strings.Join(errs, ", "))
 }
 
 //getConstructors exposes constructors for merge

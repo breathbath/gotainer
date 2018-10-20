@@ -1,8 +1,9 @@
 package container
 
 import (
-	"testing"
+	"fmt"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestFunctionalDependency(t *testing.T) {
@@ -46,6 +47,75 @@ func TestFunctionalDependencyWithSetter(t *testing.T) {
 	cont.Scan("price_calculator_double_discount", &priceCalculator)
 
 	AssertPrice(180, "1", priceCalculator, t)
+}
+
+func TestGarbageCollectionSuccess(t *testing.T) {
+	cont := PrepareContainer()
+	wasCalled := false
+	garbageCollector := func(service interface{}) error {
+		priceDoubler := service.(func(inputPrice int) int)
+		priceDoubler(1)
+		wasCalled = true
+
+		return nil
+	}
+
+	cont.AddGarbageCollectFunc("price_doubler", garbageCollector)
+
+	if wasCalled {
+		t.Error("Garbage collect function should not have been called upon initialisation")
+		return
+	}
+
+	err := cont.CollectGarbage()
+	if err != nil {
+		t.Errorf("Unexpected error %v during the garbage collection", err)
+		return
+	}
+
+	if !wasCalled {
+		t.Error("The registered garbage collect function should have been called")
+	}
+}
+
+func TestGarbageCollectionFailures(t *testing.T) {
+	cont := PrepareContainer()
+
+	garbageCollector1 := func(service interface{}) error {
+		return fmt.Errorf("Error 1")
+	}
+	cont.AddGarbageCollectFunc("book_prices", garbageCollector1)
+
+	garbageCollector2 := func(service interface{}) error {
+		return fmt.Errorf("Error 2")
+	}
+	cont.AddGarbageCollectFunc("books", garbageCollector2)
+
+	garbageCollector3 := func(service interface{}) error {
+		return nil
+	}
+	cont.AddGarbageCollectFunc("price_finder", garbageCollector3)
+
+	err := cont.CollectGarbage()
+
+	expectedError := "Garbage collection errors: Error 1, Error 2"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("Garbage collect function should return '%s' but '%v' is returned", expectedError, err)
+	}
+}
+
+func TestGarbageCollectionForUnknownService(t *testing.T) {
+	defer ExpectPanic("Unknown dependency 'some_unknown_service'", t)
+	cont := PrepareContainer()
+	garbageCollector := func(service interface{}) error {
+		return nil
+	}
+
+	cont.AddGarbageCollectFunc("some_unknown_service", garbageCollector)
+	err := cont.CollectGarbage()
+	if err != nil {
+		t.Errorf("Unexpected error %v during the garbage collection", err)
+	}
 }
 
 func PrepareContainer() Container {

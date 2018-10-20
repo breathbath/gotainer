@@ -2,11 +2,11 @@ package mocks
 
 //AuthorsStorage repository for authors data
 type AuthorsStorage struct {
-	db FakeDb
+	db *FakeDb
 }
 
 //NewAuthorsStorage constructor
-func NewAuthorsStorage(db FakeDb) AuthorsStorage {
+func NewAuthorsStorage(db *FakeDb) AuthorsStorage {
 	return AuthorsStorage{db}
 }
 

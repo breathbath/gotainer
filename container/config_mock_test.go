@@ -54,6 +54,10 @@ func getMockedConfigTree() Tree {
 			Id:           "db",
 			NewFunc:      mocks.NewFakeDb,
 			ServiceNames: Services{"connection_string"},
+			GarbageFunc: func(service interface{}) error {
+				fakeDb := service.(*mocks.FakeDb)
+				return fakeDb.Destroy()
+			},
 		},
 		Node{
 			Id:           "authors_storage",
@@ -106,4 +110,9 @@ func getMockedConfigTree() Tree {
 			ServiceNames: Services{"EnableLogging"},
 		},
 	}
+}
+
+func buildContainerFromMockedConfig() Container {
+	configTree := getMockedConfigTree()
+	return RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
 }

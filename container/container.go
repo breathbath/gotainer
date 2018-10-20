@@ -9,6 +9,8 @@ type Container interface {
 	Get(id string, isCached bool) interface{}
 	Check()
 	Exists(id string) bool
+	AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc)
+	CollectGarbage() error
 }
 
 //MergeableContainer containers that support merging

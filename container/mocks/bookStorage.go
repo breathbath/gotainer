@@ -2,11 +2,11 @@ package mocks
 
 //BookStorage repository for books data
 type BookStorage struct {
-	db FakeDb
+	db *FakeDb
 }
 
 //NewBookStorage BookStorage constructor
-func NewBookStorage(db FakeDb) BookStorage {
+func NewBookStorage(db *FakeDb) BookStorage {
 	return BookStorage{db}
 }
 
