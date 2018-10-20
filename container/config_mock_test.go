@@ -5,10 +5,6 @@ import "github.com/breathbath/gotainer/container/mocks"
 func getMockedConfigTree() Tree {
 	return Tree{
 		Node{
-			NewFunc: mocks.NewConfig,
-			Id:      "config",
-		},
-		Node{
 			Id: "connection_string",
 			Constr: func(c Container) (interface{}, error) {
 				config := c.Get("config", true).(mocks.Config)
@@ -16,14 +12,13 @@ func getMockedConfigTree() Tree {
 			},
 		},
 		Node{
-			Id:           "db",
-			NewFunc:      mocks.NewFakeDb,
-			ServiceNames: Services{"connection_string"},
-		},
-		Node{
 			Id:           "book_storage",
 			NewFunc:      mocks.NewBookStorage,
 			ServiceNames: Services{"db"},
+		},
+		Node{
+			NewFunc: mocks.NewConfig,
+			Id:      "config",
 		},
 		Node{
 			Id: "book_creator",
@@ -54,6 +49,11 @@ func getMockedConfigTree() Tree {
 
 				return mocks.NewBookFinder(bs, bc), nil
 			},
+		},
+		Node{
+			Id:           "db",
+			NewFunc:      mocks.NewFakeDb,
+			ServiceNames: Services{"connection_string"},
 		},
 		Node{
 			Id:           "authors_storage",

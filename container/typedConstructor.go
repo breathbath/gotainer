@@ -26,11 +26,9 @@ func convertNewMethodToConstructor(
 		validateConstructorReturnValues(reflectedNewMethod, serviceId),
 	)
 
-	argumentsToCallConstructorFunc, errors := getValidFunctionArguments(reflectedNewMethod, newMethodArgumentNames, container)
-
-	panicIfErrors(errors)
-
 	return func(c Container) (interface{}, error) {
+		argumentsToCallConstructorFunc, errors := getValidFunctionArguments(reflectedNewMethod, newMethodArgumentNames, container)
+		panicIfErrors(errors)
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
 		if reflectedNewMethod.Type().NumOut() == 2 {
 			if isErrorType(reflectedNewMethod.Type().Out(0)) {

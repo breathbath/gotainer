@@ -40,7 +40,9 @@ func TestIncompatibleInterfaces(t *testing.T) {
 		"web_fetcher",
 	)
 
-	cont.Scan("incompatible_cache", nil)
+	var bd mocks.BookDownloader
+
+	cont.Scan("wrong_downloader", &bd)
 }
 
 func TestCheckFailingForWrongLazyDependencies(t *testing.T) {

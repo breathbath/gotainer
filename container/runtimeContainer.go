@@ -1,7 +1,6 @@
 package container
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -64,8 +63,7 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 	constructorFunc, ok := rc.constructors[id]
 	if !ok {
-		errStr := fmt.Sprintf("Unknown dependency '%s'", id)
-		panic(errors.New(errStr))
+		panic(fmt.Errorf("Unknown dependency '%s'", id))
 	}
 
 	service, err := constructorFunc(rc)

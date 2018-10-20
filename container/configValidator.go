@@ -35,12 +35,12 @@ func validateNode(node Node, errCollection *[]error, tree Tree) {
 
 //ValidateConfig validates a tree of config options
 func ValidateConfig(tree Tree) {
-	errors := []error{}
+	errs := []error{}
 	for _, node := range tree {
-		validateNode(node, &errors, tree)
+		validateNode(node, &errs, tree)
 	}
 
-	panicIfErrors(errors)
+	panicIfErrors(errs)
 }
 
 func validateNewFunc(node Node, errCollection *[]error) {
