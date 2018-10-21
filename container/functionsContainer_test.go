@@ -98,10 +98,13 @@ func TestGarbageCollectionFailures(t *testing.T) {
 
 	err := cont.CollectGarbage()
 
-	expectedError := "Garbage collection errors: Error 1, Error 2"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Garbage collect function should return '%s' but '%v' is returned", expectedError, err)
+	expectedError1 := "Garbage collection errors: Error 1, Error 2"
+	expectedError2 := "Garbage collection errors: Error 2, Error 1"
+	if err.Error() == expectedError1 || err.Error() == expectedError2 {
+		return
 	}
+
+	t.Errorf("Garbage collect function should return '%s' or '%s' but '%v' is returned", expectedError1, expectedError2, err)
 }
 
 func TestGarbageCollectionForUnknownService(t *testing.T) {
