@@ -89,6 +89,9 @@ If you want to create a config file for your dependencies, use:
         //at this point you have a fully working container with dependencies from the config tree
         container := builder.BuildContainerFromConfig(configTree)
 
+Please note that you can declare your services in any order, e.g. you can declare a service A which is dependent
+on service B before or after it.
+
 ## Fetching services
 Assuming that you already created a container and declared all needed services, you can start fetching them:
 
@@ -452,3 +455,75 @@ do it in an integration test as:
             container := NewAppContainer()
             container.Check()
         }
+
+## Garbage collection
+
+Sometimes your services might use resources which should be released on application exit. One typical example is a db connection,
+which should be closed on after chain of operations. You cannot expect this happening automatically on exit, so you have to release
+your resources.
+
+In some cases this procedure might be quite cumbersome: imagine you have 5 services using a db service. If any of them will release
+a db connection after doing some operation, all later calls to it will fail. In a big application it's very hard to control the lifecycle
+of the shared resources.
+
+The Gotainer provides an effective solution for it. You can register all your garbage collection functions alongside with services, and
+make sure that you call the garbage colletion method of Gotainer at application exit. Since you declare container in some entry point, you
+can be sure that all resources will be released before exit, rather than in some service lifecycle operations.
+
+Let's look at some examples:
+
+       ...
+
+       //my db service holds reference to the db connection
+       type MyDbService struct{
+            dbConn: DbConnection
+       }
+
+       //imagine some library method returning a DbConnection instance
+       func NewMyDbService(dbConn: DbConnection) MyDbService {
+          return MyService{dbConn: dbConn}
+       }
+
+       //this is the actual garbage collection
+       func (ms MyService) Destroy() error {
+           return ms.dbConn.Disconnect()
+       }
+
+       ...
+       func main() {
+            container := NewAppContainer() //here we already have created a DbConnection resource
+            container.AddNewMethod("my_db_service", NewMyDbService, "db") //adding our services with the db in it
+
+            //the actual garbage collection callback
+            dbGarbageCollector := func(service interface{}) error {
+                return service.(MyDbService).Destroy()
+            }
+            container.AddGarbageCollectFunc("my_db_service", dbGarbageCollector)
+
+            //this will happen on exit from main (and therefore from the application rather than in some service)
+            defer container.CollectGarbage()
+
+            //or you can also notify about disconnection problems
+            defer func() {
+                err := container.CollectGarbage()
+                if err != nil {
+                    fmt.Println(err)
+                }
+            }
+       }
+
+If you prefer to use container config:
+
+        	return Tree{
+        	    ...
+        		Node{
+        			Id:           "my_db_service",
+        			NewFunc:      NewMyDbService,
+        			ServiceNames: Services{"db"},
+        			GarbageFunc: func(service interface{}) error {
+        				myDbService := service.(MyDbService)
+        				return myDbService.Destroy()
+        			},
+        		},
+        		...
+        	}
