@@ -1,3 +1,1 @@
 1. Observers and events could be declared inside a service definition rather than a separate declaration
-2. Add possible cleanup functions for services and method to container to release resources after programm exit
-3. More explicit description about event and observer declarations in the container config
