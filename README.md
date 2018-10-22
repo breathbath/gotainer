@@ -459,7 +459,7 @@ do it in an integration test as:
 ## Garbage collection
 
 Sometimes your code might use resources which should be released on the application exit. One typical example is a db connection
-which is expected to be closed, when your client is ready with all operations. The recommended and obvious way is to use the defer operator e.g.
+which is expected to be closed, when your db client is ready with all operations. The recommended and obvious way is to use the defer operator e.g.
 
     defer dbConn.close()
 
@@ -471,15 +471,15 @@ Imagine that the dbConn is reused by many different services you define in your 
 
     defer dbConn.close()
 
-That is a perfectly ok, but if you decided to use dependency container to get rid of a boilderplate code, you need to delegate the releasing of
-the resources (garbage collection to the container)
+That is perfectly ok, but if you decided to use a dependency container to get rid of a boilderplate code, you need to delegate the releasing of
+resources (garbage collection) to the container.
 
     cont := NewAppContainer()
     articlesProvider := cont.get("articles_provider", true).(ArticlesProvider)
     //dbConn is injected by the container into articlesProvider so you don't have access to it here
 
-One might think to release the shared resource in on of the services using it. But what if another resource will later call to the dbConn and will
-discover it's closed?
+One might think to release a shared resource in on of the services using it. But what if another service later calls the dbConn and
+discovers it's closed? This will lead to very hard trackable errors.
 
 The Gotainer has a garbage collection functionality to solve this problem. You can register all your garbage collection functions and call them just by doing:
 
@@ -507,7 +507,7 @@ Let's look at some examples:
        ...
        func main() {
             container := NewAppContainer() //here we already have created a DbConnection resource
-            container.AddNewMethod("my_db_service", NewMyDbService, "db") //adding our services with the db in it
+            container.AddNewMethod("my_db_service", NewMyDbService, "dbConnString") //adding our services with the dbConnString in it
 
             //the actual garbage collection callback
             dbGarbageCollector := func(service interface{}) error {
@@ -534,7 +534,7 @@ If you prefer to use container config:
         		Node{
         			Id:           "my_db_service",
         			NewFunc:      NewMyDbService,
-        			ServiceNames: Services{"db"},
+        			ServiceNames: Services{"dbConnString"},
         			GarbageFunc: func(service interface{}) error {
         				myDbService := service.(MyDbService)
         				return myDbService.Destroy()
@@ -545,5 +545,45 @@ If you prefer to use container config:
 
 In this case just don't forget to call `defer container.CollectGarbage()` in your main function.
 
-Garbage collection functions are called in the order of declarations. Also make sure that your services don't call the garbage
-collection functions of other services, as in this case this might lead to unnecessary function repetitions and possible errors.
+Garbage collection functions are called in the order of declaration. You should avoid calling release function of already released resources.
+In this case the shared services should register just one garbage collection call, rather than the services using it trying to release them in their own
+release functions.
+
+Let's consider the following case:
+
+        		Node{
+        			Id:           "my_db_service",
+        			NewFunc:      NewMyDbService,
+        			ServiceNames: Services{"dbConnString"},
+        			GarbageFunc: func(service interface{}) error {
+        				myDbService := service.(MyDbService)
+        				return myDbService.Destroy()
+        			},
+        		},
+                Node{
+                    Id:           "users_provider",
+                    NewFunc:      NewUsersProvider,
+                    ServiceNames: Services{"my_db_service"},
+                    GarbageFunc: func(service interface{}) error {
+                        myUsersProvider := service.(UsersProvider)
+                        return myUsersProvider.Destroy()
+                    },
+                },
+
+                type UsersProvider struct {
+                    db MyDbService
+                    externalConn ExternalConn
+                }
+
+                func NewUsersProvider(db MyDbService) UsersProvider {
+                    return UsersProvider {db: db, externalConn: externalLibrary.OpenConn()}
+                }
+
+                func (up UsersProvider) Destroy() error {
+                    up.externalConn.close() //here we release resources owned by the UsersProvider only which is ok
+                    up.db.Destroy() //don't do this as this will be called earlier by the container
+
+                    return nil
+                }
+
+The general rule is that shared services are responsible for garbage collection calls, rather than services using them.
