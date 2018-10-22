@@ -458,17 +458,32 @@ do it in an integration test as:
 
 ## Garbage collection
 
-Sometimes your services might use resources which should be released on application exit. One typical example is a db connection,
-which should be closed on after chain of operations. You cannot expect this happening automatically on exit, so you have to release
-your resources.
+Sometimes your code might use resources which should be released on the application exit. One typical example is a db connection
+which is expected to be closed, when your client is ready with all operations. The recommended and obvious way is to use the defer operator e.g.
 
-In some cases this procedure might be quite cumbersome: imagine you have 5 services using a db service. If any of them will release
-a db connection after doing some operation, all later calls to it will fail. In a big application it's very hard to control the lifecycle
-of the shared resources.
+    defer dbConn.close()
 
-The Gotainer provides an effective solution for it. You can register all your garbage collection functions alongside with services, and
-make sure that you call the garbage colletion method of Gotainer at application exit. Since you declare container in some entry point, you
-can be sure that all resources will be released before exit, rather than in some service lifecycle operations.
+Imagine that the dbConn is reused by many different services you define in your application:
+
+    dbConn := db.Connect()
+    usersProvider := users.NewProvider(dbConn)
+    articlesProvider :=  articles.NewProvider(dbConn)
+
+    defer dbConn.close()
+
+That is a perfectly ok, but if you decided to use dependency container to get rid of a boilderplate code, you need to delegate the releasing of
+the resources (garbage collection to the container)
+
+    cont := NewAppContainer()
+    articlesProvider := cont.get("articles_provider", true).(ArticlesProvider)
+    //dbConn is injected by the container into articlesProvider so you don't have access to it here
+
+One might think to release the shared resource in on of the services using it. But what if another resource will later call to the dbConn and will
+discover it's closed?
+
+The Gotainer has a garbage collection functionality to solve this problem. You can register all your garbage collection functions and call them just by doing:
+
+    defer container.CollectGarbage()
 
 Let's look at some examples:
 
@@ -527,3 +542,8 @@ If you prefer to use container config:
         		},
         		...
         	}
+
+In this case just don't forget to call `defer container.CollectGarbage()` in your main function.
+
+Garbage collection functions are called in the order of declarations. Also make sure that your services don't call the garbage
+collection functions of other services, as in this case this might lead to unnecessary function repetitions and possible errors.
