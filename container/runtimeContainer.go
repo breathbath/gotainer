@@ -10,7 +10,7 @@ type RuntimeContainer struct {
 	constructors      map[string]Constructor
 	cache             dependencyCache
 	eventsContainer   *EventsContainer
-	garbageCollectors map[string]GarbageCollectorFunc
+	garbageCollectors *GarbageCollectorFuncs
 }
 
 //NewRuntimeContainer creates container
@@ -19,7 +19,7 @@ func NewRuntimeContainer() *RuntimeContainer {
 		constructors:      make(map[string]Constructor),
 		cache:             newDependencyCache(),
 		eventsContainer:   NewEventsContainer(),
-		garbageCollectors: make(map[string]GarbageCollectorFunc),
+		garbageCollectors: NewGarbageCollectorFuncs(),
 	}
 }
 
@@ -122,19 +122,20 @@ func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 
 //AddGarbageCollectFunc registers a garbage collection function to destroy a service resources
 func (rc *RuntimeContainer) AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc) {
-	rc.garbageCollectors[serviceName] = gcFunc
+	rc.garbageCollectors.Add(serviceName, gcFunc)
 }
 
 //CollectGarbage will call all registered garbage collection functions and return the aggregated error result
 func (rc *RuntimeContainer) CollectGarbage() error {
 	errs := []string{}
-	for serviceName, gcFunc := range rc.garbageCollectors {
-		service := rc.Get(serviceName, true)
+	rc.garbageCollectors.Range(func(gcName string, gcFunc GarbageCollectorFunc) bool {
+		service := rc.Get(gcName, true)
 		err := gcFunc(service)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
-	}
+		return true
+	})
 
 	if len(errs) == 0 {
 		return nil

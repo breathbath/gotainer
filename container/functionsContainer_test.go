@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 	"github.com/breathbath/gotainer/container/mocks"
+	"strings"
 	"testing"
 )
 
@@ -78,6 +79,52 @@ func TestGarbageCollectionSuccess(t *testing.T) {
 	}
 }
 
+func TestGarbageCollectionCallOrder(t *testing.T) {
+	garbageCollectionServices := []string{
+		"book_prices",
+		"books",
+		"price_finder",
+		"price_doubler",
+		"price_calculator_double",
+		"price_tripleMultiplier",
+	}
+
+	actualCalls := []string{}
+
+	cont := PrepareContainer()
+
+	gcFuncBuilder := func(gcServiceName string) GarbageCollectorFunc {
+		return func(service interface{}) error {
+			actualCalls = append(actualCalls, gcServiceName)
+			return nil
+		}
+	}
+	for _, gcServiceName := range garbageCollectionServices {
+		gcFunc := gcFuncBuilder(gcServiceName)
+		cont.AddGarbageCollectFunc(gcServiceName, gcFunc)
+	}
+
+	err := cont.CollectGarbage()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	expectedCallsChain := strings.Join(garbageCollectionServices, ",")
+	actualCallsChain := strings.Join(actualCalls, ",")
+
+	if expectedCallsChain != actualCallsChain {
+		t.Errorf(`
+-Expected garbage collection calls 
++Actual garbage collection calls
+- [%s]
++ [%s]
+are not equal`,
+			expectedCallsChain,
+			actualCallsChain)
+	}
+}
+
 func TestGarbageCollectionFailures(t *testing.T) {
 	cont := PrepareContainer()
 
@@ -98,13 +145,12 @@ func TestGarbageCollectionFailures(t *testing.T) {
 
 	err := cont.CollectGarbage()
 
-	expectedError1 := "Garbage collection errors: Error 1, Error 2"
-	expectedError2 := "Garbage collection errors: Error 2, Error 1"
-	if err.Error() == expectedError1 || err.Error() == expectedError2 {
+	expectedError := "Garbage collection errors: Error 1, Error 2"
+	if err.Error() == expectedError {
 		return
 	}
 
-	t.Errorf("Garbage collect function should return '%s' or '%s' but '%v' is returned", expectedError1, expectedError2, err)
+	t.Errorf("Garbage collect function should return '%s' but '%v' is returned", expectedError, err)
 }
 
 func TestGarbageCollectionForUnknownService(t *testing.T) {
