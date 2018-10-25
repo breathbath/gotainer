@@ -6,7 +6,9 @@ type Container interface {
 	AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string)
 	Scan(id string, dest interface{})
 	ScanNonCached(id string, dest interface{})
+	ScanSecure(id string, isCached bool, dest interface{}) error
 	Get(id string, isCached bool) interface{}
+	GetSecure(id string, isCached bool) (interface{}, error)
 	Check()
 	Exists(id string) bool
 	AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc)

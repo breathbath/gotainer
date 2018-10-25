@@ -11,10 +11,16 @@ import (
 func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
 	destinationPointerValue := reflect.ValueOf(destination)
 	if destinationPointerValue.Kind() != reflect.Ptr {
-		return errors.New("Please provide a pointer variable rather than a value")
+		return fmt.Errorf(
+			"Please provide a pointer variable rather than a value [check '%s' service]",
+			dependencyName,
+		)
 	}
 	if destinationPointerValue.IsNil() {
-		return errors.New("Please provide an initialsed variable rather than a non-initialised pointer variable")
+		return fmt.Errorf(
+			"Please provide an initialsed variable rather than a non-initialised pointer variable [check '%s' service]",
+			dependencyName,
+		)
 	}
 
 	reflectedCreatedDependency := reflect.ValueOf(createdDependency)
@@ -33,9 +39,10 @@ func copySourceVariableToDestinationVariable(createdDependency interface{}, dest
 	}
 
 	errStr := fmt.Sprintf(
-		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s",
+		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s [check '%s' service]",
 		reflectedCreatedDependency.Type().Name(),
 		destinationValue.Type().Name(),
+		dependencyName,
 		dependencyName,
 	)
 

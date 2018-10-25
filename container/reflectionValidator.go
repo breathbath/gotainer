@@ -22,7 +22,7 @@ func assertFunctionDeclaration(
 ) error {
 	if !isFunction(reflectedConstructorFunc) {
 		errName := fmt.Sprintf(
-			"A function is expected rather than '%s', see '%s'",
+			"A function is expected rather than '%s' [check '%s' service]",
 			reflectedConstructorFunc.Kind(),
 			serviceId,
 		)
@@ -33,7 +33,7 @@ func assertFunctionDeclaration(
 
 	if !hasArgCount {
 		errName := fmt.Sprintf(
-			"The function requires %d arguments, but %d arguments are provided in the service declaration '%s'",
+			"The function requires %d arguments, but %d arguments are provided [check '%s' service]",
 			argsCount,
 			expectedArgumentsCount,
 			serviceId,
@@ -80,17 +80,19 @@ func validateConstructorReturnValues(reflectedConstructorFunc reflect.Value, ser
 func assertConstructorArgumentsAreCompatible(
 	reflectedConstructorArgument reflect.Type,
 	reflectedContainerDependency reflect.Value,
-	dependencyName string) error {
+	dependencyName, serviceId string,
+) error {
 	if reflectedConstructorArgument.Kind() == reflect.Interface && reflectedContainerDependency.Type().Implements(reflectedConstructorArgument) {
 		return nil
 	}
 	if reflectedConstructorArgument.Kind() != reflectedContainerDependency.Kind() ||
 		!reflectedConstructorArgument.ConvertibleTo(reflectedContainerDependency.Type()) {
 		errName := fmt.Sprintf(
-			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the Constr function call",
+			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the Constr function call [check '%s' service]",
 			dependencyName,
 			reflectedContainerDependency.Type(),
 			reflectedConstructorArgument,
+			serviceId,
 		)
 		return errors.New(errName)
 	}

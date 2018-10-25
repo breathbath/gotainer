@@ -43,46 +43,65 @@ func (rc *RuntimeContainer) RegisterDependencyEvent(eventName, dependencyName st
 	rc.eventsContainer.registerDependencyEvent(eventName, dependencyName)
 }
 
-//Scan copies a Service identified by id into a typed destination (its a pointer reference)
+//Scan copies a Service identified by id into a typed destination (its a pointer reference) and panics on failure
 func (rc *RuntimeContainer) Scan(id string, dest interface{}) {
-	baseValue := rc.Get(id, true)
-	err := copySourceVariableToDestinationVariable(baseValue, dest, id)
+	err := rc.ScanSecure(id, true, dest)
 	if err != nil {
 		panic(err)
 	}
 }
 
-//ScanNonCached creates a Service every time rc method is called
+//ScanNonCached creates a Service every time rc method is called and panics on failure
 func (rc *RuntimeContainer) ScanNonCached(id string, dest interface{}) {
-	baseValue := rc.Get(id, false)
-	err := copySourceVariableToDestinationVariable(baseValue, dest, id)
+	err := rc.ScanSecure(id, false, dest)
 	if err != nil {
 		panic(err)
 	}
 }
 
-//Get fetches a Service in a return argument
+//Scan copies a Service identified by id into a typed destination (its a pointer reference) and returns error on failure
+func (rc *RuntimeContainer) ScanSecure(id string, isCached bool, dest interface{}) error {
+	baseValue, err := rc.GetSecure(id, isCached)
+	if err != nil {
+		return err
+	}
+
+	return copySourceVariableToDestinationVariable(baseValue, dest, id)
+}
+
+//Get fetches a Service in a return argument and panics if an error happens
 func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
+
+	dependency, err := rc.GetSecure(id, isCached)
+	if err != nil {
+		panic(err)
+	}
+
+	return dependency
+}
+
+//Get fetches a Service in a return argument and returns an error rather than panics
+func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
-		return dependency
+		return dependency, nil
 	}
 
 	constructorFunc, ok := rc.constructors[id]
 	if !ok {
-		panic(fmt.Errorf("Unknown dependency '%s'", id))
+		return dependency, fmt.Errorf("Unknown dependency '%s'", id)
 	}
 
 	service, err := constructorFunc(rc)
 	if err != nil {
-		panic(err)
+		return service, fmt.Errorf("%v [check '%s' service]", err, id)
 	}
 
 	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
 
 	rc.cache.Set(id, service)
 
-	return service
+	return service, nil
 }
 
 //Check ensures that all runtime Config are created correctly
@@ -129,11 +148,16 @@ func (rc *RuntimeContainer) AddGarbageCollectFunc(serviceName string, gcFunc Gar
 func (rc *RuntimeContainer) CollectGarbage() error {
 	errs := []string{}
 	rc.garbageCollectors.Range(func(gcName string, gcFunc GarbageCollectorFunc) bool {
-		service := rc.Get(gcName, true)
-		err := gcFunc(service)
+		service, err := rc.GetSecure(gcName, true)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
+
+		err = gcFunc(service)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+
 		return true
 	})
 

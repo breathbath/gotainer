@@ -8,8 +8,8 @@ import (
 
 func TestWrongMixedDependenciesInStaticCall(t *testing.T) {
 	defer ExpectPanic(
-		"Cannot use the provided dependency 'book_creator' of type 'mocks.BookCreator' as 'mocks.BookStorage' in the Constr function call;\n" +
-		"Cannot use the provided dependency 'book_storage' of type 'mocks.BookStorage' as 'mocks.BookCreator' in the Constr function call"	,
+		"Cannot use the provided dependency 'book_creator' of type 'mocks.BookCreator' as 'mocks.BookStorage' in the Constr function call [check 'anotherFinder' service];\n" +
+		"Cannot use the provided dependency 'book_storage' of type 'mocks.BookStorage' as 'mocks.BookCreator' in the Constr function call [check 'anotherFinder' service]"	,
 		t,
 	)
 
@@ -27,8 +27,25 @@ func TestWrongDependencyRequested(t *testing.T) {
 	cont.Scan("lala", nil)
 }
 
+func TestWrongDependencyGetFromSecureMethod(t *testing.T) {
+	cont := CreateContainer()
+
+	_, err := cont.GetSecure("lala", true)
+	if err.Error() != "Unknown dependency 'lala'" {
+		t.Errorf("Unexpected error: %v, expected error was Unknown dependency 'lala'", err)
+	}
+}
+
+func TestWrongDependencyScannedFromSecureMethod(t *testing.T) {
+	cont := CreateContainer()
+	err := cont.ScanSecure("lala", true, nil)
+	if err.Error() != "Unknown dependency 'lala'" {
+		t.Errorf("Unexpected error: %v, expected error was Unknown dependency 'lala'", err)
+	}
+}
+
 func TestIncompatibleInterfaces(t *testing.T) {
-	defer ExpectPanic("Cannot use the provided dependency 'incompatible_cache' of type 'mocks.IncompatibleCache' as 'mocks.Cache' in the Constr function call", t)
+	defer ExpectPanic("Cannot use the provided dependency 'incompatible_cache' of type 'mocks.IncompatibleCache' as 'mocks.Cache' in the Constr function call [check 'wrong_downloader' service]", t)
 	cont := CreateContainer()
 	cont.AddNewMethod("incompatible_cache", mocks.NewIncompatibleCache)
 	cont.AddNewMethod(
@@ -46,7 +63,7 @@ func TestIncompatibleInterfaces(t *testing.T) {
 }
 
 func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
-	defer ExpectPanic("Cannot convert created value of type 'int' to expected destination value 'BookCreator' for createdDependency declaration wrong_book_creator", t)
+	defer ExpectPanic("Cannot convert created value of type 'int' to expected destination value 'BookCreator' for createdDependency declaration wrong_book_creator [check 'wrong_book_creator' service]", t)
 	cont := CreateContainer()
 	cont.AddConstructor("wrong_book_finder", func(c Container) (interface{}, error) {
 		var bc mocks.BookCreator
@@ -62,14 +79,17 @@ func TestCheckFailingForWrongLazyDependencies(t *testing.T) {
 }
 
 func TestCheckFailingForInvalidGarbageCollectionDeclaration(t *testing.T) {
-	defer ExpectPanic("Unknown dependency 'some_unknown_service'", t)
 	cont := CreateContainer()
 	garbageCollector := func(service interface{}) error {
 		return nil
 	}
 	cont.AddGarbageCollectFunc("some_unknown_service", garbageCollector)
 
-	cont.Check()
+	err := cont.CollectGarbage()
+	expectedErrorText := "Garbage collection errors: Unknown dependency 'some_unknown_service'"
+	if err.Error() != expectedErrorText {
+		t.Errorf("Unexpected error: %v, expected error was %s", err, expectedErrorText)
+	}
 }
 
 func TestFailureOnCustomConstructorError(t *testing.T) {
@@ -77,19 +97,19 @@ func TestFailureOnCustomConstructorError(t *testing.T) {
 	cont.AddConstructor("some_failing_constructor", func(c Container) (interface{}, error) {
 		return nil, errors.New("Something bad has happened")
 	})
-	defer ExpectPanic("Something bad has happened", t)
+	defer ExpectPanic("Something bad has happened [check 'some_failing_constructor' service]", t)
 	cont.Get("some_failing_constructor", true)
 }
 
 func TestWrongArgumentsCountInNewMethod(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic("The function requires 2 arguments, but 3 arguments are provided in the service declaration 'wrong_arg_count_dependency'", t)
+	defer ExpectPanic("The function requires 2 arguments, but 3 arguments are provided [check 'wrong_arg_count_dependency' service]", t)
 	cont.AddNewMethod("wrong_arg_count_dependency", mocks.NewBookFinder, "book_storage", "book_creator", "Config")
 }
 
 func TestNewMethodIsNotFunc(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic("A function is expected rather than 'string', see 'wrong_new_method_dependency'", t)
+	defer ExpectPanic("A function is expected rather than 'string' [check 'wrong_new_method_dependency' service]", t)
 	cont.AddNewMethod("wrong_new_method_dependency", "non_func")
 }
 
@@ -117,20 +137,20 @@ func TestNewMethodReturnError(t *testing.T) {
 		return errors.New("New method failed for some reason"), nil
 	}
 	cont.AddNewMethod("some_failing_newMethod", newMethodWithError)
-	defer ExpectPanic("New method failed for some reason", t)
+	defer ExpectPanic("New method failed for some reason [check 'some_failing_newMethod' service]", t)
 	cont.Get("some_failing_newMethod", true)
 }
 
 func TestNonPointerVariableDestination(t *testing.T) {
 	cont := CreateContainer()
 	var url string
-	defer ExpectPanic("Please provide a pointer variable rather than a value", t)
+	defer ExpectPanic("Please provide a pointer variable rather than a value [check 'static_files_url' service]", t)
 	cont.Scan("static_files_url", url)
 }
 
 func TestNonInitialisedPointerVariableDestination(t *testing.T) {
 	cont := CreateContainer()
 	var url *string
-	defer ExpectPanic("Please provide an initialsed variable rather than a non-initialised pointer variable", t)
+	defer ExpectPanic("Please provide an initialsed variable rather than a non-initialised pointer variable [check 'static_files_url' service]", t)
 	cont.Scan("static_files_url", url)
 }

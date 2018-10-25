@@ -17,7 +17,7 @@ func TestNewFunctionIsNotFunction(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"A function is expected rather than 'string', see '%s'",
+		"A function is expected rather than 'string' [check '%s' service]",
 		node,
 	)
 }
@@ -57,7 +57,7 @@ func TestNewFunctionHasLessArgumentsThanServiceNamesCount(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"The function requires 1 arguments, but 2 arguments are provided in the service declaration '%s'",
+		"The function requires 1 arguments, but 2 arguments are provided [check '%s' service]",
 		node,
 	)
 }
@@ -144,7 +144,7 @@ func TestObserverRequiredFieldsNotProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"Observer name is required, see '%s';\nA function is expected rather than 'string', see '%s'",
+		"Observer name is required [check '%s' service];\nA function is expected rather than 'string' [check '%s' service]",
 		node,
 		node,
 	)
@@ -155,7 +155,7 @@ func TestObserverRequiredFieldsNotProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"Observer event is required, see '%s'",
+		"Observer event is required [check '%s' service]",
 		node,
 	)
 
@@ -165,7 +165,7 @@ func TestObserverRequiredFieldsNotProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"Observer callback is required, see '%s';\nA function is expected rather than 'invalid', see '%s'",
+		"Observer callback is required [check '%s' service];\nA function is expected rather than 'invalid' [check '%s' service]",
 		node,
 		node,
 	)

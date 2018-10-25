@@ -68,15 +68,15 @@ func validateConstrFunc(node Node, errCollection *[]error) {
 
 func validateObserverDefinition(node Node, errCollection *[]error) {
 	if node.Ob.Name == "" {
-		registerNewErrorInCollection(errCollection, "Observer name is required, see '%s'", node)
+		registerNewErrorInCollection(errCollection, "Observer name is required [check '%s' service]", node)
 	}
 
 	if node.Ob.Callback == nil {
-		registerNewErrorInCollection(errCollection, "Observer callback is required, see '%s'", node)
+		registerNewErrorInCollection(errCollection, "Observer callback is required [check '%s' service]", node)
 	}
 
 	if node.Ob.Event == "" {
-		registerNewErrorInCollection(errCollection, "Observer event is required, see '%s'", node)
+		registerNewErrorInCollection(errCollection, "Observer event is required [check '%s' service]", node)
 	}
 
 	assertNewIsEmpty(node, errCollection)

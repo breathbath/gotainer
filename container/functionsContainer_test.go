@@ -154,7 +154,6 @@ func TestGarbageCollectionFailures(t *testing.T) {
 }
 
 func TestGarbageCollectionForUnknownService(t *testing.T) {
-	defer ExpectPanic("Unknown dependency 'some_unknown_service'", t)
 	cont := PrepareContainer()
 	garbageCollector := func(service interface{}) error {
 		return nil
@@ -162,8 +161,9 @@ func TestGarbageCollectionForUnknownService(t *testing.T) {
 
 	cont.AddGarbageCollectFunc("some_unknown_service", garbageCollector)
 	err := cont.CollectGarbage()
-	if err != nil {
-		t.Errorf("Unexpected error %v during the garbage collection", err)
+	expectedError := "Garbage collection errors: Unknown dependency 'some_unknown_service'"
+	if err.Error() != expectedError {
+		t.Errorf("Unexpected error: '%v' expected error was '%s'", err, expectedError)
 	}
 }
 
