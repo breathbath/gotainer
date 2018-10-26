@@ -167,6 +167,11 @@ func TestGarbageCollectionForUnknownService(t *testing.T) {
 	}
 }
 
+func TestStructInitialisation(t *testing.T) {
+	runtimeContainer := NewRuntimeContainer()
+	runtimeContainer.AddStruct(mocks.WebFetcher{})
+}
+
 func PrepareContainer() Container {
 	cont := CreateContainer()
 	cont.AddNewMethod("book_prices", mocks.GetBookPrices)

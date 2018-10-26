@@ -99,3 +99,15 @@ func assertConstructorArgumentsAreCompatible(
 
 	return nil
 }
+
+func assertStruct(reflectedValue reflect.Value) error {
+	if reflectedValue.Kind() == reflect.Struct {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"The provided dependency '%s' cannot be registered with a struct method as it's not a struct [check '%s' service]",
+		reflectedValue.Type().Name(),
+		reflectedValue.Type().Name(),
+	)
+}

@@ -62,3 +62,16 @@ func isErrorType(reflectedType reflect.Type) bool {
 	expectedErrorInterface := reflect.TypeOf((*error)(nil)).Elem()
 	return reflectedType.Implements(expectedErrorInterface)
 }
+
+//returns pkg path + value name as unique identifier
+func getFullQualifiedName(reflectedValue reflect.Type) string {
+	return reflectedValue.PkgPath() + "/" + reflectedValue.Name()
+}
+
+func getUniqueId(reflectedValue reflect.Value, providedId string) string {
+	if providedId == "" {
+		return getFullQualifiedName(reflectedValue.Type())
+	}
+
+	return providedId
+}

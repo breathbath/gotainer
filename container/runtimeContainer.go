@@ -182,3 +182,9 @@ func (rc *RuntimeContainer) getCache() dependencyCache {
 func (rc *RuntimeContainer) getEventsContainer() EventsContainer {
 	return *rc.eventsContainer
 }
+
+//getEventsContainer exposes events for merge
+func (rc *RuntimeContainer) AddStruct(structDependency interface{}, optionalId string) {
+	id, constructor := registerStructWithConstructor(rc, structDependency, optionalId)
+	rc.constructors[id] = constructor
+}

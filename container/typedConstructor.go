@@ -1,6 +1,9 @@
 package container
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 //convertNewMethodToConstructor creates a Callback that will call a New method of a Service with the Config
 //declared as newMethodArgumentNames.
@@ -121,4 +124,50 @@ func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgume
 	}
 
 	return argumentsToCallNewMethod, errors
+}
+
+func registerStructWithConstructor(
+	container Container,
+	inputStruct interface{},
+	providedId string,
+) (serviceId string, constructor Constructor) {
+	reflectedStruct := reflect.ValueOf(inputStruct)
+	reflectedStructType := reflect.TypeOf(inputStruct)
+
+	panicIfError(assertStruct(reflectedStruct))
+	serviceId = getUniqueId(reflectedStruct, providedId)
+
+	return serviceId, func(c Container) (interface{}, error) {
+		if reflectedStruct.Kind() == reflect.Ptr {
+			// Then dereference it
+			reflectedStruct = reflectedStruct.Elem()
+		}
+
+		newStruct := reflect.New(reflectedStructType)
+		errors := []error{}
+		for i := 0; i < reflectedStructType.NumField(); i++ {
+			reflectedStructField := reflectedStructType.Field(i)
+			gotainerTag, found := reflectedStructField.Tag.Lookup("gotainer")
+			if !found {
+				continue
+			}
+
+			fieldServiceId := gotainerTag
+			if fieldServiceId == "" {
+				if reflectedStructField.Type.Kind() != reflect.Struct {
+					errors = append(errors, fmt.Errorf("Untagged not supported"))
+					continue
+				}
+				fieldServiceId = getFullQualifiedName(reflectedStructField.Type)
+			}
+
+			structFieldService := container.Get(fieldServiceId, true)
+
+			newStruct.Field(i).Set(reflect.ValueOf(structFieldService))
+		}
+		panicIfErrors(errors)
+
+		return newStruct.Interface(), nil
+	}
+
 }
