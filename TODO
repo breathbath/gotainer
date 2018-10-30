@@ -1,1 +1,7 @@
-1. Observers and events could be declared inside a service definition rather than a separate declaration
+1. Recursive declarations detection
+
+    container.Node{
+        Id:           "wsClientCreator",
+        NewFunc:      websocket2.NewWsClientCreator,
+        ServiceNames: container.Services{"wsClientCreator"},
+    },
