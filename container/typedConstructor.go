@@ -1,20 +1,23 @@
 package container
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
-//convertNewMethodToConstructor creates a Callback that will call a New method of a Service with the Config
+//convertNewMethodToNewFuncConstructor creates a Callback that will call a New method of a Service with the Config
 //declared as newMethodArgumentNames.
 //Suppose we have func NewServiceA(sb ServiceB, sc ServiceC) ServiceA, if you call
-//convertNewMethodToConstructor(container, NewServiceA, "service_b", "service_c"), you will get a Callback that will:
+//convertNewMethodToNewFuncConstructor(container, NewServiceA, "service_b", "service_c"), you will get a Callback that will:
 //a) fetch "service_b" and "service_c" from the container
 //b) validate if type of "service_b" and "service_c" is convertable to the NewServiceA arguments
 //Constr) call NewServiceA with the results of container.Get("service_b") and container.Get("service_c")
-func convertNewMethodToConstructor(
+func convertNewMethodToNewFuncConstructor(
 	container Container,
 	newMethod interface{},
 	newMethodArgumentNames []string,
 	serviceId string,
-) Constructor {
+) NewFuncConstructor {
 
 	reflectedNewMethod := reflect.ValueOf(newMethod)
 
@@ -26,12 +29,13 @@ func convertNewMethodToConstructor(
 		validateConstructorReturnValues(reflectedNewMethod, serviceId),
 	)
 
-	return func(c Container) (interface{}, error) {
+	return func(c Container, isCached bool) (interface{}, error) {
 		argumentsToCallConstructorFunc, errors := getValidFunctionArguments(
 			reflectedNewMethod,
 			newMethodArgumentNames,
 			container,
 			serviceId,
+			isCached,
 		)
 		panicIfErrors(errors)
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
@@ -95,7 +99,13 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(cus
 
 //getValidFunctionArguments fetches Config by ids defined in newMethodArgumentNames and validates if they are convertable
 //to arguments of reflectedNewMethod which is a New method of a Service provided in the AddNewMethod of the container
-func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgumentNames []string, container Container, serviceId string) ([]reflect.Value, []error) {
+func getValidFunctionArguments(
+	reflectedNewMethod reflect.Value,
+	newMethodArgumentNames []string,
+	container Container,
+	serviceId string,
+	isCached bool,
+) ([]reflect.Value, []error) {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
 
@@ -104,7 +114,12 @@ func getValidFunctionArguments(reflectedNewMethod reflect.Value, newMethodArgume
 		reflectedNewMethodArgument := reflectedNewMethod.Type().In(i)
 
 		dependencyName := newMethodArgumentNames[i]
-		dependencyFromContainer := container.Get(dependencyName, true)
+		if dependencyName == serviceId {
+			errors = append(errors, fmt.Errorf("Recursive self reference declaration [check '%s' service]", serviceId))
+			continue
+		}
+
+		dependencyFromContainer := container.Get(dependencyName, isCached)
 		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
 
 		err := assertConstructorArgumentsAreCompatible(

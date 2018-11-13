@@ -19,6 +19,7 @@ type Container interface {
 type MergeableContainer interface {
 	Merge(c MergeableContainer)
 	getConstructors() map[string]Constructor
+	getNewFuncConstructors() map[string]NewFuncConstructor
 	getCache() dependencyCache
 	getEventsContainer() EventsContainer
 }
