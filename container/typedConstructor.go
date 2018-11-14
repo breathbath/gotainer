@@ -1,7 +1,6 @@
 package container
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -114,10 +113,6 @@ func getValidFunctionArguments(
 		reflectedNewMethodArgument := reflectedNewMethod.Type().In(i)
 
 		dependencyName := newMethodArgumentNames[i]
-		if dependencyName == serviceId {
-			errors = append(errors, fmt.Errorf("Recursive self reference declaration [check '%s' service]", serviceId))
-			continue
-		}
 
 		dependencyFromContainer := container.Get(dependencyName, isCached)
 		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)

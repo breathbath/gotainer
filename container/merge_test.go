@@ -45,7 +45,7 @@ func TestNonUniqueServicesMerge(t *testing.T) {
 
 	container1, container2 := setupTwoContainers()
 	container2.AddNewMethod("book_shelve", mocks.NewBookShelve)
-	defer ExpectPanic(fmt.Sprintf("Cannot merge containers because of non unique Service id '%s'", "book_shelve"), t)
+	defer ExpectPanic(t, fmt.Sprintf("Cannot merge containers because of non unique Service id '%s'", "book_shelve"))
 	container1.Merge(container2)
 }
 

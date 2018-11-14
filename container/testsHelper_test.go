@@ -1,15 +1,29 @@
 package container
 
 import (
-	"testing"
 	"fmt"
+	"strings"
+	"testing"
 )
 
-//ExpectPanic a helper method to simulate a  panic expectation in tests
-func ExpectPanic(expectedPanicName string, t *testing.T) {
+//ExpectPanic a helper method to simulate a panic expectation in tests, you can provide multiple possible panic variants
+func ExpectPanic( t *testing.T, expectedPanicNames ...string) {
+	expectedPanicNamesFlat := strings.Join(expectedPanicNames, ",")
+
+	noPanicDetectedMessage := "There was a panic message expected '%s', but none was received"
+	unexpectedPanicMessage := "\nWrong panic message:(-expected message, +provided message)\n- %s\n+ %s"
+	if len(expectedPanicNames) > 1 {
+		noPanicDetectedMessage = "There were panic variants expected [%s], but none was received"
+		unexpectedPanicMessage = "\nWrong panic message:(-expected message variants, +provided message)\n- %s\n+ %s"
+	}
+
 	err := recover()
 	if err == nil {
-		t.Fatalf("There was a panic message expected '%s', but none was received", expectedPanicName)
+		if len(expectedPanicNames) == 0 {
+			return
+		}
+
+		t.Fatalf(noPanicDetectedMessage, expectedPanicNamesFlat)
 	}
 	var panicMessage string
 
@@ -22,9 +36,13 @@ func ExpectPanic(expectedPanicName string, t *testing.T) {
 		panicMessage = "Unknown error type"
 	}
 
-	if panicMessage != expectedPanicName {
-		t.Fatalf("\nWrong panic message:(-expected message, +provided message)\n- %s\n+ %s", expectedPanicName, panicMessage)
+	for _, expectedPanicName := range expectedPanicNames {
+		if panicMessage == expectedPanicName {
+			return
+		}
 	}
+
+	t.Fatalf(unexpectedPanicMessage, expectedPanicNamesFlat, panicMessage)
 }
 
 func AssertExpectedDependency(c Container, dependencyName string, expectedValue interface{}, t *testing.T) {
@@ -39,7 +57,7 @@ func AssertExpectedDependency(c Container, dependencyName string, expectedValue 
 	}
 }
 
-func AssertError(err error, expectedError string,  t *testing.T) {
+func AssertError(err error, expectedError string, t *testing.T) {
 	if err == nil {
 		t.Errorf("Error '%s' is expected but non was returned", expectedError)
 		return

@@ -12,6 +12,9 @@ type RuntimeContainer struct {
 	cache               dependencyCache
 	eventsContainer     *EventsContainer
 	garbageCollectors   *GarbageCollectorFuncs
+	visitedDependencies map[string]bool
+	nestingLevel        int
+	visitedPath         []string
 }
 
 //NewRuntimeContainer creates container
@@ -22,6 +25,9 @@ func NewRuntimeContainer() *RuntimeContainer {
 		eventsContainer:     NewEventsContainer(),
 		garbageCollectors:   NewGarbageCollectorFuncs(),
 		newFuncConstructors: make(map[string]NewFuncConstructor),
+		visitedDependencies: make(map[string]bool),
+		visitedPath:         []string{},
+		nestingLevel:        0,
 	}
 }
 
@@ -84,8 +90,17 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 //Get fetches a Service in a return argument and returns an error rather than panics
 func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
+	rc.visitedPath = append(rc.visitedPath, id)
+	_, ok := rc.visitedDependencies[id]
+	if ok {
+		return nil, fmt.Errorf("Detected dependencies' circle: %s", strings.Join(rc.visitedPath, "->"))
+	}
+	rc.visitedDependencies[id] = true
+
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
+		rc.visitedDependencies = make(map[string]bool)
+		rc.visitedPath = []string{}
 		return dependency, nil
 	}
 
@@ -107,6 +122,9 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 	}
 
 	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+
+	rc.visitedDependencies = make(map[string]bool)
+	rc.visitedPath = []string{}
 
 	rc.cache.Set(id, service)
 
