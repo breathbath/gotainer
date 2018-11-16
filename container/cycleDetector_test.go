@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+var cycleTree Tree
+
+func init() {
+	cycleTree = Tree{
+		Node{
+			Id:           "userProvider",
+			NewFunc:      mocks.NewUserProvider,
+			ServiceNames: Services{"roleProvider"},
+		},
+		Node{
+			Id:           "roleProvider",
+			NewFunc:      mocks.NewRoleProvider,
+			ServiceNames: Services{"userProvider"},
+		},
+		Node{
+			Id:      "rightsProvider",
+			NewFunc: mocks.NewRightsProvider,
+		},
+	}
+}
+
 func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage")
 	recursiveTree := Tree{
@@ -32,31 +53,14 @@ func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
 	cont.Get("book_finder", true)
 }
 
-func TestCircleReferencesWithConfigDeclaration(t *testing.T) {
+func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
 	defer ExpectPanic(t, "Detected dependencies' cycle: userProvider->roleProvider->userProvider")
 
-	circleTree := Tree{
-		Node{
-			Id:           "userProvider",
-			NewFunc:      mocks.NewUserProvider,
-			ServiceNames: Services{"roleProvider"},
-		},
-		Node{
-			Id:           "roleProvider",
-			NewFunc:      mocks.NewRoleProvider,
-			ServiceNames: Services{"userProvider"},
-		},
-		Node{
-			Id:      "rightsProvider",
-			NewFunc: mocks.NewRightsProvider,
-		},
-	}
-
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(circleTree)
+	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
 	cont.Get("userProvider", true)
 }
 
-func TestCircleReferencesWithNewMethodDeclaration(t *testing.T) {
+func TestCycleReferencesWithNewMethodDeclaration(t *testing.T) {
 	defer ExpectPanic(
 		t,
 		"Detected dependencies' cycle: userProvider->roleProvider->userProvider",
@@ -71,7 +75,7 @@ func TestCircleReferencesWithNewMethodDeclaration(t *testing.T) {
 	cont.Check()
 }
 
-func TestCircleReferencesWithConstructor(t *testing.T) {
+func TestCycleReferencesWithConstructor(t *testing.T) {
 	defer ExpectPanic(
 		t,
 		"Detected dependencies' cycle: userReader->nameCutter->userReader",
@@ -92,7 +96,7 @@ func TestCircleReferencesWithConstructor(t *testing.T) {
 	cont.Check()
 }
 
-func TestNoCircleWithMultipleReferencedDependencies(t *testing.T) {
+func TestNoCycleWithMultipleReferencedDependencies(t *testing.T) {
 	cont := NewRuntimeContainer()
 	cont.AddConstructor("dbConnector", func(c Container) (interface{}, error) {
 		usrPass := c.Get("dbUser", true).(string)
@@ -118,7 +122,7 @@ func TestNoCircleWithMultipleReferencedDependencies(t *testing.T) {
 	cont.Check()
 }
 
-func TestNoCircleWithMultipleCallsOfSameDependency(t *testing.T) {
+func TestNoCycleWithMultipleCallsOfSameDependency(t *testing.T) {
 	cont := NewRuntimeContainer()
 	cont.AddConstructor("configPath", func(c Container) (interface{}, error) {
 		return "/tmp", nil
@@ -127,4 +131,35 @@ func TestNoCircleWithMultipleCallsOfSameDependency(t *testing.T) {
 	cont.Get("configPath", true)
 	cont.Get("configPath", true)
 	cont.Check()
+}
+
+func TestCyclicAndNonCyclicDependencies(t *testing.T) {
+	defer ExpectPanic(
+		t,
+		"Detected dependencies' cycle: configPath->configPath",
+	)
+
+	cont := NewRuntimeContainer()
+	cont.AddConstructor("configPath", func(c Container) (interface{}, error) {
+		return c.Get("configPath", true), nil
+	})
+	cont.AddConstructor("email", func(c Container) (interface{}, error) {
+		return "root@root.me", nil
+	})
+
+	email := cont.Get("email", true).(string)
+	if email != "root@root.me" {
+		t.Errorf("Should get 'root@root.me' value for email dependency but got %s", email)
+		return
+	}
+	cont.Get("configPath", true)
+}
+
+func TestCycleDetectionWithSecureMethod(t *testing.T) {
+	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
+	_, err := cont.GetSecure("userProvider", true)
+	expectedErrorText := "Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]"
+	if err.Error() != expectedErrorText {
+		t.Errorf("Error %s expected but %s was received", expectedErrorText, err.Error())
+	}
 }

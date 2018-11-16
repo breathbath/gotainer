@@ -1,6 +1,9 @@
 package container
 
-import "strings"
+import (
+	coreErrors "errors"
+	"strings"
+)
 
 func panicIfError(err error) {
 	if err != nil {
@@ -9,6 +12,15 @@ func panicIfError(err error) {
 }
 
 func panicIfErrors(errors []error ) {
+	err := mergeErrors(errors)
+	panicIfError(err)
+}
+
+func mergeErrors(errors []error ) error {
+	if len(errors) == 0 {
+		return nil
+	}
+
 	errorStrings := []string{}
 	for _, err := range errors {
 		if err != nil {
@@ -16,7 +28,5 @@ func panicIfErrors(errors []error ) {
 		}
 	}
 
-	if len(errorStrings) > 0  {
-		panic(strings.Join(errorStrings, ";\n"))
-	}
+	return coreErrors.New(strings.Join(errorStrings, ";\n"))
 }

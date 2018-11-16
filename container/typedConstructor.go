@@ -29,14 +29,17 @@ func convertNewMethodToNewFuncConstructor(
 	)
 
 	return func(c Container, isCached bool) (interface{}, error) {
-		argumentsToCallConstructorFunc, errors := getValidFunctionArguments(
+		argumentsToCallConstructorFunc, err := getValidFunctionArguments(
 			reflectedNewMethod,
 			newMethodArgumentNames,
 			container,
 			serviceId,
 			isCached,
 		)
-		panicIfErrors(errors)
+		if err != nil {
+			return nil, err
+		}
+
 		values := reflectedNewMethod.Call(argumentsToCallConstructorFunc)
 		if reflectedNewMethod.Type().NumOut() == 2 {
 			if isErrorType(reflectedNewMethod.Type().Out(0)) {
@@ -104,7 +107,7 @@ func getValidFunctionArguments(
 	container Container,
 	serviceId string,
 	isCached bool,
-) ([]reflect.Value, []error) {
+) ([]reflect.Value, error) {
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
 
@@ -114,10 +117,15 @@ func getValidFunctionArguments(
 
 		dependencyName := newMethodArgumentNames[i]
 
-		dependencyFromContainer := container.Get(dependencyName, isCached)
+		dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
+		if err != nil {
+			errors = append(errors, err)
+			continue
+		}
+
 		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
 
-		err := assertConstructorArgumentsAreCompatible(
+		err = assertConstructorArgumentsAreCompatible(
 			reflectedNewMethodArgument,
 			reflectedDependencyFromContainer,
 			dependencyName,
@@ -130,5 +138,5 @@ func getValidFunctionArguments(
 		}
 	}
 
-	return argumentsToCallNewMethod, errors
+	return argumentsToCallNewMethod, mergeErrors(errors)
 }
