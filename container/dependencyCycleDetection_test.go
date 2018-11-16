@@ -6,7 +6,7 @@ import (
 )
 
 func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' circle: book_storage->book_storage")
+	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage")
 	recursiveTree := Tree{
 		Node{
 			Id:           "book_storage",
@@ -20,7 +20,7 @@ func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 }
 
 func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Recursive self reference declaration [check 'book_finder' service]")
+	defer ExpectPanic(t, "Detected dependencies' cycle: book_finder->book_finder")
 	cont := NewRuntimeContainer()
 
 	cont.AddConstructor("db", func(c Container) (interface{}, error) {
@@ -33,7 +33,7 @@ func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
 }
 
 func TestCircleReferencesWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' circle: userProvider->roleProvider->userProvider")
+	defer ExpectPanic(t, "Detected dependencies' cycle: userProvider->roleProvider->userProvider")
 
 	circleTree := Tree{
 		Node{
@@ -59,8 +59,8 @@ func TestCircleReferencesWithConfigDeclaration(t *testing.T) {
 func TestCircleReferencesWithNewMethodDeclaration(t *testing.T) {
 	defer ExpectPanic(
 		t,
-		"Detected dependencies' circle: userProvider->roleProvider->userProvider",
-		"Detected dependencies' circle: roleProvider->userProvider->roleProvider",
+		"Detected dependencies' cycle: userProvider->roleProvider->userProvider",
+		"Detected dependencies' cycle: roleProvider->userProvider->roleProvider",
 	)
 
 	cont := NewRuntimeContainer()
@@ -74,8 +74,8 @@ func TestCircleReferencesWithNewMethodDeclaration(t *testing.T) {
 func TestCircleReferencesWithConstructor(t *testing.T) {
 	defer ExpectPanic(
 		t,
-		"Detected dependencies' circle: userReader->nameCutter->userReader",
-		"Detected dependencies' circle: nameCutter->userReader->nameCutter",
+		"Detected dependencies' cycle: userReader->nameCutter->userReader",
+		"Detected dependencies' cycle: nameCutter->userReader->nameCutter",
 	)
 	cont := NewRuntimeContainer()
 

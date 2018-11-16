@@ -5,6 +5,56 @@ import (
 	"strings"
 )
 
+type CycleControl struct {
+	recStack       map[string]bool
+	recStackSorted []string
+	visited        map[string]bool
+	cycleDetected  bool
+	cycle          [] string
+}
+
+func (cc *CycleControl) VisitBeforeRecursion(dep string) bool {
+	if cc.cycleDetected {
+		return true
+	}
+
+	if isInRecStack, ok := cc.recStack[dep]; ok && isInRecStack {
+		cc.registerCycle(dep)
+		return true
+	}
+
+	if isInVisited, ok := cc.visited[dep]; ok && isInVisited {
+		return false
+	}
+
+	cc.visited[dep] = true
+	cc.recStack[dep] = true
+	cc.recStackSorted = append(cc.recStackSorted, dep)
+
+	return false
+}
+
+func (cc *CycleControl) VisitAfterRecursion(dep string) {
+	cc.recStack[dep] = false
+}
+
+func (cc *CycleControl) registerCycle(dep string) {
+	cc.recStackSorted = append(cc.recStackSorted, dep)
+	if len(cc.recStackSorted) == 1 {
+		cc.recStackSorted = append(cc.recStackSorted, cc.recStackSorted[0])
+	}
+	for _, cyclicDep := range cc.recStackSorted {
+		if isTrue, ok := cc.recStack[cyclicDep]; ok && isTrue {
+			cc.cycle = append(cc.cycle, cyclicDep)
+		}
+	}
+	cc.cycleDetected = true
+}
+
+func (cc *CycleControl) GetCycle() []string {
+	return cc.cycle
+}
+
 //RuntimeContainer creates Services at runtime with registered callbacks
 type RuntimeContainer struct {
 	constructors        map[string]Constructor
@@ -15,10 +65,12 @@ type RuntimeContainer struct {
 	visitedDependencies map[string]bool
 	nestingLevel        int
 	visitedPath         []string
+	cycleControl        *CycleControl
 }
 
 //NewRuntimeContainer creates container
 func NewRuntimeContainer() *RuntimeContainer {
+	cycleControl := CycleControl{cycle: []string{}, cycleDetected: false, recStack: make(map[string]bool), visited: make(map[string]bool)}
 	return &RuntimeContainer{
 		constructors:        make(map[string]Constructor),
 		cache:               newDependencyCache(),
@@ -28,6 +80,7 @@ func NewRuntimeContainer() *RuntimeContainer {
 		visitedDependencies: make(map[string]bool),
 		visitedPath:         []string{},
 		nestingLevel:        0,
+		cycleControl:        &cycleControl,
 	}
 }
 
@@ -90,17 +143,14 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 //Get fetches a Service in a return argument and returns an error rather than panics
 func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
-	rc.visitedPath = append(rc.visitedPath, id)
-	_, ok := rc.visitedDependencies[id]
-	if ok {
-		return nil, fmt.Errorf("Detected dependencies' circle: %s", strings.Join(rc.visitedPath, "->"))
+	isCyclic := rc.cycleControl.VisitBeforeRecursion(id)
+
+	if isCyclic {
+		return nil, fmt.Errorf("Detected dependencies' cycle: %s", strings.Join(rc.cycleControl.GetCycle(), "->"))
 	}
-	rc.visitedDependencies[id] = true
 
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
-		rc.visitedDependencies = make(map[string]bool)
-		rc.visitedPath = []string{}
 		return dependency, nil
 	}
 
@@ -121,10 +171,9 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 		return service, fmt.Errorf("%v [check '%s' service]", err, id)
 	}
 
-	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+	rc.cycleControl.VisitAfterRecursion(id)
 
-	rc.visitedDependencies = make(map[string]bool)
-	rc.visitedPath = []string{}
+	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
 
 	rc.cache.Set(id, service)
 
