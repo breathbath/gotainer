@@ -117,7 +117,12 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 	}
 
 	if err != nil {
-		return service, fmt.Errorf("%v [check '%s' service]", err, id)
+		errorMsgSuffix := fmt.Sprintf(" [check '%s' service]", id)
+		if strings.Contains(err.Error(), errorMsgSuffix) {
+			errorMsgSuffix = ""
+		}
+
+		return service, fmt.Errorf("%v%s", err, errorMsgSuffix)
 	}
 
 	rc.cycleDetector.VisitAfterRecursion(id)

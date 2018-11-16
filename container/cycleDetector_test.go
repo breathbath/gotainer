@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage")
+	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage [check 'book_storage' service]")
 	recursiveTree := Tree{
 		Node{
 			Id:           "book_storage",
@@ -41,7 +41,7 @@ func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 }
 
 func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' cycle: book_finder->book_finder")
+	defer ExpectPanic(t, "Detected dependencies' cycle: book_finder->book_finder [check 'book_finder' service]")
 	cont := NewRuntimeContainer()
 
 	cont.AddConstructor("db", func(c Container) (interface{}, error) {
@@ -54,7 +54,7 @@ func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
 }
 
 func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' cycle: userProvider->roleProvider->userProvider")
+	defer ExpectPanic(t, "Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]")
 
 	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
 	cont.Get("userProvider", true)
@@ -63,8 +63,8 @@ func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
 func TestCycleReferencesWithNewMethodDeclaration(t *testing.T) {
 	defer ExpectPanic(
 		t,
-		"Detected dependencies' cycle: userProvider->roleProvider->userProvider",
-		"Detected dependencies' cycle: roleProvider->userProvider->roleProvider",
+		"Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]",
+		"Detected dependencies' cycle: roleProvider->userProvider->roleProvider [check 'userProvider' service] [check 'roleProvider' service]",
 	)
 
 	cont := NewRuntimeContainer()
