@@ -163,3 +163,25 @@ func TestCycleDetectionWithSecureMethod(t *testing.T) {
 		t.Errorf("Error %s expected but %s was received", expectedErrorText, err.Error())
 	}
 }
+
+func TestCycledAndNonCycledDependenciesWithSecureMethod(t *testing.T) {
+	cont := NewRuntimeContainer()
+	cont.AddConstructor("configPath", func(c Container) (interface{}, error) {
+		return c.GetSecure("configPath", true)
+	})
+	cont.AddConstructor("email", func(c Container) (interface{}, error) {
+		return "root@root.me", nil
+	})
+
+	cont.GetSecure("configPath", true) //is cyclic we just ignore it
+
+	email, err := cont.GetSecure("email", true)
+	if err != nil {
+		t.Errorf("No error is expected for a non-cyclic dependency but %v received", err)
+		return
+	}
+	if email.(string) != "root@root.me" {
+		t.Errorf("Should get 'root@root.me' value for email dependency but got %s", email)
+		return
+	}
+}

@@ -12,10 +12,8 @@ type RuntimeContainer struct {
 	cache               dependencyCache
 	eventsContainer     *EventsContainer
 	garbageCollectors   *GarbageCollectorFuncs
-	visitedDependencies map[string]bool
-	nestingLevel        int
-	visitedPath         []string
 	cycleDetector       *CycleDetector
+	rootDependency      string
 }
 
 //NewRuntimeContainer creates container
@@ -26,9 +24,6 @@ func NewRuntimeContainer() *RuntimeContainer {
 		eventsContainer:     NewEventsContainer(),
 		garbageCollectors:   NewGarbageCollectorFuncs(),
 		newFuncConstructors: make(map[string]NewFuncConstructor),
-		visitedDependencies: make(map[string]bool),
-		visitedPath:         []string{},
-		nestingLevel:        0,
 		cycleDetector:       NewCycleDetector(),
 	}
 }
@@ -92,9 +87,15 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 //Get fetches a Service in a return argument and returns an error rather than panics
 func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
-	isCyclic := rc.cycleDetector.VisitBeforeRecursion(id)
+	if rc.rootDependency == "" {
+		rc.rootDependency = id
+	}
 
-	if isCyclic {
+	defer rc.resetCycleDetectorIfNeeded(id)
+
+	rc.cycleDetector.VisitBeforeRecursion(id)
+
+	if rc.cycleDetector.IsEnabled() && rc.cycleDetector.HasCycle() {
 		return nil, fmt.Errorf("Detected dependencies' cycle: %s", strings.Join(rc.cycleDetector.GetCycle(), "->"))
 	}
 
@@ -127,11 +128,20 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 
 	rc.cycleDetector.VisitAfterRecursion(id)
 
+	rc.cycleDetector.DisableCycleDetection()
 	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+	rc.cycleDetector.EnableCycleDetection()
 
 	rc.cache.Set(id, service)
 
 	return service, nil
+}
+
+func (rc *RuntimeContainer) resetCycleDetectorIfNeeded(curDependency string) {
+	if rc.rootDependency == curDependency {
+		rc.rootDependency = ""
+		rc.cycleDetector.Reset()
+	}
 }
 
 //Check ensures that all runtime Config are created correctly
