@@ -583,15 +583,15 @@ release functions.
 
 Let's consider the following case:
 
-        		Node{
-        			Id:           "my_db_service",
-        			NewFunc:      NewMyDbService,
-        			ServiceNames: Services{"dbConnString"},
-        			GarbageFunc: func(service interface{}) error {
-        				myDbService := service.(MyDbService)
-        				return myDbService.Destroy()
-        			},
-        		},
+        	    Node{
+                    Id: "my_db_service",
+                    NewFunc:      NewMyDbService,
+                    ServiceNames: Services{"dbConnString"},
+                    GarbageFunc: func(service interface{}) error {
+                      myDbService := service.(MyDbService)
+                      return myDbService.Destroy()
+                    },
+                },
                 Node{
                     Id:           "users_provider",
                     NewFunc:      NewUsersProvider,
@@ -621,12 +621,12 @@ Let's consider the following case:
 The general rule is that shared services are responsible for garbage collection calls, rather than services using them.
 
 ## Cycle detection
-Dependency cycle is a classic problem of graph cycles in [computer science](https://en.wikipedia.org/wiki/Cycle_(graph_theory)).
+Dependency cycle is a classic case of graph cycles in [computer science](https://en.wikipedia.org/wiki/Cycle_(graph_theory)).
 A cycle is a situation where one dependency requires itself as a constructor argument or appears in the requirement list
 of any other dependency which is needed to construct the current one. 
 Here are some examples: 
 
-A self reference cycle (db -> db):
+A self reference (db -> db):
 
     ...
     //a db service is fetching itself upon construction
@@ -645,7 +645,7 @@ A dependencies circle (rolesProvider -> userProvider -> rolesProvider):
     		return c.GetSecure("roleProvider", true)
     	})
     	
-The same with in the config declaration
+The same in the config declaration:
 
         Tree{
             Node{
@@ -660,12 +660,13 @@ The same with in the config declaration
             }
         }
 
-If cycle appears, the dependency cannot be created which leads to a runtime error. In this case if you use `Scan/Get/ScanNonCached` methods, 
+If a cycle appears, the dependency cannot be created which leads to a runtime error. In this case if you use `Scan/Get/ScanNonCached` methods, 
 application will panic. If you're using `ScanSecure/GetSecure` methods, you will get a cycle detection error in the method output result.
 
 Detection of a dependency cycle means that the container is unusable and a developer must change the code to fix this error. 
-Unfortunately Runtime container cannot detect cycles at compile time. This is the price you should pay for a lazy 
+Unfortunately runtime container implementation cannot detect cycles at compile time. This is the price you should pay for a lazy 
 dependencies initialisation. 
-To detect cycles in a container, you should trigger the `Check` function e.g. in a test. 
+
+To detect possible cycles in a container, you should trigger the container's `Check` function in a go test. 
 We recommend to create a simple test as mentioned [here](https://github.com/breathbath/gotainer#testing) and setup a CI env
 to detect cycles before the faulty code goes to production.
