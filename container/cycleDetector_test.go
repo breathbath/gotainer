@@ -78,19 +78,17 @@ func TestCycleReferencesWithNewMethodDeclaration(t *testing.T) {
 func TestCycleReferencesWithConstructor(t *testing.T) {
 	defer ExpectPanic(
 		t,
-		"Detected dependencies' cycle: userReader->nameCutter->userReader",
-		"Detected dependencies' cycle: nameCutter->userReader->nameCutter",
+		"Detected dependencies' cycle: rolesProvider->userProvider->rolesProvider [check 'userProvider' service] [check 'rolesProvider' service]",
+		"Detected dependencies' cycle: userProvider->rolesProvider->userProvider [check 'userProvider' service] [check 'rolesProvider' service]",
 	)
 	cont := NewRuntimeContainer()
 
-	cont.AddConstructor("nameCutter", func(c Container) (interface{}, error) {
-		rp := c.Get("userReader", true).(mocks.RoleProvider)
-		return rp, nil
+	cont.AddConstructor("rolesProvider", func(c Container) (interface{}, error) {
+		return c.GetSecure("userProvider", true)
 	})
 
-	cont.AddConstructor("userReader", func(c Container) (interface{}, error) {
-		rp := c.Get("nameCutter", true).(mocks.UserProvider)
-		return rp, nil
+	cont.AddConstructor("userProvider", func(c Container) (interface{}, error) {
+		return c.GetSecure("rolesProvider", true)
 	})
 
 	cont.Check()

@@ -456,6 +456,38 @@ do it in an integration test as:
             container.Check()
         }
 
+## Dependencies cache
+Dependencies cache is a in-memory storage for dependencies allowing to retrieve a service in an initialized state. 
+This gives a great opportunity to share services between different consumers to spare time for initialisation. 
+A typical example for that is a db connection, which can be reused by different db dependant services, without 
+explicitly opening connection each time you need to query one or another table/objects collection.
+
+RuntimeContainer allows you to get a cached or non-cached version of a service through different methods:
+
+	Scan(id string, dest interface{}) //scans a cached version of a service into a destination
+	ScanNonCached(id string, dest interface{}) //scans a non-cached version
+	Get(id string, isCached bool) interface{} //receive service in the output where isCached flag affects the cache switch
+	GetSecure(id string, isCached bool) (interface{}, error) //the same with error driven version of Get
+	
+In any case, if you require a non cached version of a service, it will be initialised from beginning and will be cached
+replacing the old version.
+
+An alternative non-container approach is to use the go's init() function where you can put your initialisation logic, 
+which will be executed also only once. But in this case you should implement your own logic to get an uncached version of a service 
+which is sometimes cumbersome and also quite repetative. With the RuntimeContainer you get this opportunity out of the box.
+
+## Lazy initialisation
+
+If you use the RuntimeContainer, you have an advantage of a lazy services initialisation which is provided out of the box.
+This means that any service you declare in the container is not initialised immediately but when it is explicitly required
+directly or by some other service. This means practically that your application won't open a db connection, when your
+current execution is not requiring a db data (meaning a db dependent service).
+
+If you use an init() function for a service initialisation, this will be always executed, once it's package is imported
+somewhere. To have a lazy initialisation you should create your own builder methods which will be a boilerplate code,
+which we want to avoid with a dependency container.
+
+
 ## Garbage collection
 
 Sometimes your code might use resources which should be released on the application exit. One typical example is a db connection
@@ -587,3 +619,53 @@ Let's consider the following case:
                 }
 
 The general rule is that shared services are responsible for garbage collection calls, rather than services using them.
+
+## Cycle detection
+Dependency cycle is a classic problem of graph cycles in [computer science](https://en.wikipedia.org/wiki/Cycle_(graph_theory)).
+A cycle is a situation where one dependency requires itself as a constructor argument or appears in the requirement list
+of any other dependency which is needed to construct the current one. 
+Here are some examples: 
+
+A self reference cycle (db -> db):
+
+    ...
+    //a db service is fetching itself upon construction
+	cont.AddConstructor("db", func(c Container) (interface{}, error) {
+		return c.GetSecure("db")
+	})
+	...
+	
+A dependencies circle (rolesProvider -> userProvider -> rolesProvider):
+	
+		cont.AddConstructor("roleProvider", func(c Container) (interface{}, error) {
+    		return c.GetSecure("userProvider", true)
+    	})
+    
+    	cont.AddConstructor("userProvider", func(c Container) (interface{}, error) {
+    		return c.GetSecure("roleProvider", true)
+    	})
+    	
+The same with in the config declaration
+
+        Tree{
+            Node{
+                Id:           "userProvider",
+                NewFunc:      mocks.NewUserProvider,
+                ServiceNames: Services{"roleProvider"},
+            },
+            Node{
+                Id:           "roleProvider",
+                NewFunc:      mocks.NewRoleProvider,
+                ServiceNames: Services{"userProvider"},
+            }
+        }
+
+If cycle appears, the dependency cannot be created which leads to a runtime error. In this case if you use `Scan/Get/ScanNonCached` methods, 
+application will panic. If you're using `ScanSecure/GetSecure` methods, you will get a cycle detection error in the method output result.
+
+Detection of a dependency cycle means that the container is unusable and a developer must change the code to fix this error. 
+Unfortunately Runtime container cannot detect cycles at compile time. This is the price you should pay for a lazy 
+dependencies initialisation. 
+To detect cycles in a container, you should trigger the `Check` function e.g. in a test. 
+We recommend to create a simple test as mentioned [here](https://github.com/breathbath/gotainer#testing) and setup a CI env
+to detect cycles before the faulty code goes to production.
