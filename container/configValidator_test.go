@@ -226,7 +226,7 @@ func assertWrongNodeDeclaration(node Node, t *testing.T, expectedErrorFormat str
 	} else {
 		errorText = expectedErrorFormat
 	}
-	defer ExpectPanic(errorText, t)
+	defer ExpectPanic(t, errorText)
 
 	ValidateConfig(configTree)
 }

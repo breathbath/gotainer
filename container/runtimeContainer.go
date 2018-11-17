@@ -7,19 +7,24 @@ import (
 
 //RuntimeContainer creates Services at runtime with registered callbacks
 type RuntimeContainer struct {
-	constructors      map[string]Constructor
-	cache             dependencyCache
-	eventsContainer   *EventsContainer
-	garbageCollectors *GarbageCollectorFuncs
+	constructors        map[string]Constructor
+	newFuncConstructors map[string]NewFuncConstructor
+	cache               dependencyCache
+	eventsContainer     *EventsContainer
+	garbageCollectors   *GarbageCollectorFuncs
+	cycleDetector       *CycleDetector
+	rootDependency      string
 }
 
 //NewRuntimeContainer creates container
 func NewRuntimeContainer() *RuntimeContainer {
 	return &RuntimeContainer{
-		constructors:      make(map[string]Constructor),
-		cache:             newDependencyCache(),
-		eventsContainer:   NewEventsContainer(),
-		garbageCollectors: NewGarbageCollectorFuncs(),
+		constructors:        make(map[string]Constructor),
+		cache:               newDependencyCache(),
+		eventsContainer:     NewEventsContainer(),
+		garbageCollectors:   NewGarbageCollectorFuncs(),
+		newFuncConstructors: make(map[string]NewFuncConstructor),
+		cycleDetector:       NewCycleDetector(),
 	}
 }
 
@@ -30,7 +35,7 @@ func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
 
 //AddNewMethod converts a New Service method to a valid Callback Constr
 func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-	rc.constructors[id] = convertNewMethodToConstructor(rc, typedConstructor, constructorArgumentNames, id)
+	rc.newFuncConstructors[id] = convertNewMethodToNewFuncConstructor(rc, typedConstructor, constructorArgumentNames, id)
 }
 
 //AddDependencyObserver registers Service that will receive Config it is interested in
@@ -82,31 +87,70 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 
 //Get fetches a Service in a return argument and returns an error rather than panics
 func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
+	if rc.rootDependency == "" {
+		rc.rootDependency = id
+	}
+
+	defer rc.resetCycleDetectorIfNeeded(id)
+
+	rc.cycleDetector.VisitBeforeRecursion(id)
+
+	if rc.cycleDetector.IsEnabled() && rc.cycleDetector.HasCycle() {
+		return nil, fmt.Errorf("Detected dependencies' cycle: %s", strings.Join(rc.cycleDetector.GetCycle(), "->"))
+	}
+
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
 		return dependency, nil
 	}
 
 	constructorFunc, ok := rc.constructors[id]
+	var service interface{}
+	var err error
 	if !ok {
-		return dependency, fmt.Errorf("Unknown dependency '%s'", id)
+		newFuncConstructor, ok := rc.newFuncConstructors[id]
+		if !ok {
+			return dependency, fmt.Errorf("Unknown dependency '%s'", id)
+		}
+		service, err = newFuncConstructor(rc, isCached)
+	} else {
+		service, err = constructorFunc(rc)
 	}
 
-	service, err := constructorFunc(rc)
 	if err != nil {
-		return service, fmt.Errorf("%v [check '%s' service]", err, id)
+		errorMsgSuffix := fmt.Sprintf(" [check '%s' service]", id)
+		if strings.Contains(err.Error(), errorMsgSuffix) {
+			errorMsgSuffix = ""
+		}
+
+		return service, fmt.Errorf("%v%s", err, errorMsgSuffix)
 	}
 
+	rc.cycleDetector.VisitAfterRecursion(id)
+
+	rc.cycleDetector.DisableCycleDetection()
 	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+	rc.cycleDetector.EnableCycleDetection()
 
 	rc.cache.Set(id, service)
 
 	return service, nil
 }
 
+func (rc *RuntimeContainer) resetCycleDetectorIfNeeded(curDependency string) {
+	if rc.rootDependency == curDependency {
+		rc.rootDependency = ""
+		rc.cycleDetector.Reset()
+	}
+}
+
 //Check ensures that all runtime Config are created correctly
 func (rc *RuntimeContainer) Check() {
 	for dependencyName := range rc.constructors {
+		rc.Get(dependencyName, false)
+	}
+
+	for dependencyName := range rc.newFuncConstructors {
 		rc.Get(dependencyName, false)
 	}
 
@@ -130,6 +174,17 @@ func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 			panic(conflictingErrorMessage)
 		}
 		rc.constructors[keyConstructor] = constr
+	}
+
+	for keyConstructor, constr := range c.getNewFuncConstructors() {
+		if _, ok := rc.newFuncConstructors[keyConstructor]; ok {
+			conflictingErrorMessage := fmt.Sprintf(
+				"Cannot merge containers because of non unique Service id '%s'",
+				keyConstructor,
+			)
+			panic(conflictingErrorMessage)
+		}
+		rc.newFuncConstructors[keyConstructor] = constr
 	}
 
 	for keyCache, cache := range c.getCache() {
@@ -171,6 +226,11 @@ func (rc *RuntimeContainer) CollectGarbage() error {
 //getConstructors exposes constructors for merge
 func (rc *RuntimeContainer) getConstructors() map[string]Constructor {
 	return rc.constructors
+}
+
+//getConstructors exposes new func constructors for merge
+func (rc *RuntimeContainer) getNewFuncConstructors() map[string]NewFuncConstructor {
+	return rc.newFuncConstructors
 }
 
 //getCache exposes cache for merge

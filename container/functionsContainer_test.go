@@ -79,6 +79,65 @@ func TestGarbageCollectionSuccess(t *testing.T) {
 	}
 }
 
+func TestDuplicatedGarbageCollectFuncs(t *testing.T) {
+	cont := PrepareContainer()
+
+	funcCalledNumber := 0
+	garbageCollector1 := func(service interface{}) error {
+		funcCalledNumber = 1
+		return nil
+	}
+	garbageCollector2 := func(service interface{}) error {
+		funcCalledNumber = 2
+		return nil
+	}
+
+	cont.AddGarbageCollectFunc("in_memory_cache", garbageCollector1)
+	cont.AddGarbageCollectFunc("in_memory_cache", garbageCollector2)
+
+	err := cont.CollectGarbage()
+	if err != nil {
+		t.Errorf("Unexpected error %v during the garbage collection", err)
+		return
+	}
+
+	if funcCalledNumber != 1 {
+		t.Errorf("First garbage collection func should be called rather than second which has a conflicting name")
+	}
+}
+
+func TestGarbageCollectionLoop(t *testing.T) {
+	funcsCollection := NewGarbageCollectorFuncs()
+	funcCalls := []string{}
+	funcsCollection.Add("func1", func(service interface{}) error {
+		funcCalls = append(funcCalls, "func1")
+		return nil
+	})
+	funcsCollection.Add("func2", func(service interface{}) error {
+		funcCalls = append(funcCalls, "func2")
+		return nil
+	})
+	funcsCollection.Add("func3", func(service interface{}) error {
+		funcCalls = append(funcCalls, "func3")
+		return nil
+	})
+
+	funcsCollection.Range(func(gcName string, f GarbageCollectorFunc) bool {
+		f(nil)
+
+		if gcName == "func2" {
+			return false
+		}
+
+		return true
+	})
+
+	actualCalledFuncs := strings.Join(funcCalls, ",")
+	if strings.Join(funcCalls, ",") != "func1,func2" {
+		t.Errorf("It was expected that only func1 and func2 are called but %s functions were called", actualCalledFuncs)
+	}
+}
+
 func TestGarbageCollectionCallOrder(t *testing.T) {
 	garbageCollectionServices := []string{
 		"book_prices",
