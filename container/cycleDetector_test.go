@@ -54,7 +54,10 @@ func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
 }
 
 func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]")
+	defer ExpectPanic(
+		t,
+		"Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]",
+	)
 
 	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
 	cont.Get("userProvider", true)
@@ -91,7 +94,7 @@ func TestCycleReferencesWithConstructor(t *testing.T) {
 		return c.GetSecure("rolesProvider", true)
 	})
 
-	cont.Check()
+	cont.Get("rolesProvider", true)
 }
 
 func TestNoCycleWithMultipleReferencedDependencies(t *testing.T) {
