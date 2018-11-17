@@ -42,11 +42,25 @@ func TestContainerMerge(t *testing.T) {
 
 //TestNonUniqueServicesMerge handles the test case when both containers have a Service with the same Name
 func TestNonUniqueServicesMerge(t *testing.T) {
-
 	container1, container2 := setupTwoContainers()
 	container2.AddNewMethod("book_shelve", mocks.NewBookShelve)
 	defer ExpectPanic(t, fmt.Sprintf("Cannot merge containers because of non unique Service id '%s'", "book_shelve"))
 	container1.Merge(container2)
+}
+
+func TestConflictingMerge(t *testing.T) {
+	defer ExpectPanic(t, "Cannot merge containers because of non unique Service id 'serviceA'")
+	cont1 := NewRuntimeContainer()
+	cont1.AddConstructor("serviceA", func(c Container) (interface{}, error) {
+		return "serviceA", nil
+	})
+
+	cont2 := NewRuntimeContainer()
+	cont2.AddConstructor("serviceA", func(c Container) (interface{}, error) {
+		return "serviceA", nil
+	})
+
+	cont1.Merge(cont2)
 }
 
 func assertBookShelveContainsBook(bookShelve *mocks.BookShelve, expectedBooksAmount int, expectedBookId string, t *testing.T) {

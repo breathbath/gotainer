@@ -68,9 +68,6 @@ func (cd *CycleDetector) IsEnabled() bool {
 
 func (cd *CycleDetector) registerCycle(dep string) {
 	cd.recStackSorted = append(cd.recStackSorted, dep)
-	if len(cd.recStackSorted) == 1 {
-		cd.recStackSorted = append(cd.recStackSorted, cd.recStackSorted[0])
-	}
 	for _, cyclicDep := range cd.recStackSorted {
 		if isTrue, ok := cd.recStack[cyclicDep]; ok && isTrue {
 			cd.cycle = append(cd.cycle, cyclicDep)

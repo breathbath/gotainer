@@ -186,3 +186,27 @@ func TestCycledAndNonCycledDependenciesWithSecureMethod(t *testing.T) {
 		return
 	}
 }
+
+func TestResetCycleDetector(t *testing.T) {
+	cd := NewCycleDetector()
+	cd.cycleDetected = true
+	if !cd.HasCycle() {
+		t.Error("Cycle flag should set as detected")
+		return
+	}
+
+	cd.Reset()
+
+	if cd.HasCycle() {
+		t.Error("Cycle flag should set as not detected after reset")
+		return
+	}
+
+	cd.cycleDetected = true
+	cd.DisableCycleDetection()
+	cd.Reset()
+	if !cd.HasCycle() {
+		t.Error("Cycle flag should set as detected if cycle detection is disabled")
+		return
+	}
+}
