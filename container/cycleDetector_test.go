@@ -183,3 +183,84 @@ func TestCycledAndNonCycledDependenciesWithSecureMethod(t *testing.T) {
 		return
 	}
 }
+
+func TestCycleDetectionWithCache(t *testing.T) {
+	cont := NewRuntimeContainer()
+
+	cont.AddConstructor("pathRegistry", func(c Container) (interface{}, error) {
+		return "pathRegistry", nil
+	})
+	cont.AddDependencyObserver("newPath", "pathRegistry", func(pathRegistry, currentPath string){
+	})
+
+	cont.AddConstructor("rootPath", func(c Container) (interface{}, error) {
+		return "root", nil
+	})
+	cont.AddConstructor("imgPath", func(c Container) (interface{}, error) {
+		rootPath := c.Get("rootPath", true).(string)
+		return rootPath + "/" + "img", nil
+	})
+	cont.RegisterDependencyEvent("newPath", "imgPath")
+
+	cont.AddConstructor("configPath", func(c Container) (interface{}, error) {
+		rootPath := c.Get("rootPath", true).(string)
+		return rootPath + "/" + "config", nil
+	})
+	cont.RegisterDependencyEvent("newPath", "configPath")
+
+	cont.AddConstructor("envPath", func(c Container) (interface{}, error) {
+		configPath := c.Get("configPath", true).(string)
+		return configPath + "/" + "env", nil
+	})
+	cont.RegisterDependencyEvent("newPath", "envPath")
+
+	cont.Get("configPath", true)
+
+	cont.Get("pathRegistry", true)
+}
+
+func TestCycleDetectionWithEvents(t *testing.T) {
+	cont := NewRuntimeContainer()
+	cont.AddConstructor("pathsCollector", func(c Container) (interface{}, error) {
+		return &mocks.PathsCollector{Paths: []string{}}, nil
+	})
+
+	cont.AddDependencyObserver("newPathProvider", "pathsCollector", func(pc *mocks.PathsCollector, newPathProvider mocks.PathProvider){
+		pc.AddPath(newPathProvider.GetPath())
+	})
+
+	cont.AddConstructor("longestPathProvider", func(c Container) (interface{}, error) {
+		return &mocks.LongestPathProvider{}, nil
+	})
+
+	cont.AddDependencyObserver("possibleLongestPathProvider", "longestPathProvider", func(lpp *mocks.LongestPathProvider, newPathProvider mocks.SimplePathProvider){
+		lpp.EvaluatePath(newPathProvider.GetPath())
+	})
+
+	cont.AddConstructor("pathAProvider", func(c Container) (interface{}, error) {
+		return mocks.SimplePathProvider{Path: "pathA"}, nil
+	})
+	cont.RegisterDependencyEvent("newPathProvider", "pathAProvider")
+	cont.RegisterDependencyEvent("possibleLongestPathProvider", "pathAProvider")
+
+	cont.AddConstructor("pathBProvider", func(c Container) (interface{}, error) {
+		return mocks.SimplePathProvider{Path: "pathB"}, nil
+	})
+	cont.RegisterDependencyEvent("newPathProvider", "pathBProvider")
+	cont.RegisterDependencyEvent("possibleLongestPathProvider", "pathBProvider")
+
+	cont.AddConstructor("pathCProvider", func(c Container) (interface{}, error) {
+		return mocks.SimplePathProvider{Path: "pathCC"}, nil
+	})
+	cont.RegisterDependencyEvent("newPathProvider", "pathCProvider")
+	cont.RegisterDependencyEvent("possibleLongestPathProvider", "pathCProvider")
+
+	cont.RegisterDependencyEvent("newPathProvider", "longestPathProvider")
+
+	pc := cont.Get("pathsCollector", true).(*mocks.PathsCollector)
+	providedPaths := pc.GetAllPaths()
+	expectedPaths := "pathA,pathB,pathCC,pathCC"
+	if providedPaths != expectedPaths {
+		t.Errorf("Not expected result %s is returned by pathsCollector, expected result was: %s", providedPaths, expectedPaths)
+	}
+}

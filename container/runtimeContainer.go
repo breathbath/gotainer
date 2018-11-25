@@ -101,6 +101,7 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 
 	dependency, ok := rc.cache.Get(id)
 	if ok && isCached {
+		rc.cycleDetector.VisitAfterRecursion(id)
 		return dependency, nil
 	}
 
@@ -128,9 +129,7 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 
 	rc.cycleDetector.VisitAfterRecursion(id)
 
-	rc.cycleDetector.DisableCycleDetection()
 	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
-	rc.cycleDetector.EnableCycleDetection()
 
 	rc.cache.Set(id, service)
 
