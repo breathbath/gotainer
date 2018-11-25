@@ -7,7 +7,7 @@ import (
 
 // This example fetching of services from container with a wrapped error
 // if it happens
-func ExampleFetch_ScanSecure() {
+func ExampleRuntimeContainer_ScanSecure() {
 	cont := NewRuntimeContainer()
 	cont.AddConstructor("parameterOk", func(c Container) (interface{}, error) {
 		return "123456", nil
