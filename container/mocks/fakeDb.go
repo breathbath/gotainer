@@ -42,8 +42,12 @@ func (fdb *FakeDb) FindInTable(tableName, id string) (string, bool) {
 	if fdb.isDestroyed {
 		panic("Database was already destroyed")
 	}
-	tableData, bookName := map[string]string{}, ""
-	found := false
+	var (
+		tableData map[string]string
+		bookName string
+		found bool
+	)
+
 	tableData, found = fdb.data[tableName]
 	if found {
 		bookName, found = tableData[id]
@@ -59,7 +63,7 @@ func (fdb *FakeDb) Destroy() error {
 }
 
 //WasDestroyed mocked func to make sure if the Destroy method was called before
-func (fdb *FakeDb) WasDestroyed() bool {
+func (fdb FakeDb) WasDestroyed() bool {
 	return fdb.isDestroyed
 }
 
