@@ -44,8 +44,8 @@ func (fdb *FakeDb) FindInTable(tableName, id string) (string, bool) {
 	}
 	var (
 		tableData map[string]string
-		bookName string
-		found bool
+		bookName  string
+		found     bool
 	)
 
 	tableData, found = fdb.data[tableName]
