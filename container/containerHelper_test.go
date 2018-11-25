@@ -18,8 +18,8 @@ func TestParametersAdding(t *testing.T) {
 	int64Params := map[string]int64{"paramInt641": 3}
 
 	bookParams := map[string]mocks.Book{
-		"paramBook1": mocks.Book{Id: "book1"},
-		"paramBook2": mocks.Book{Id: "book2"},
+		"paramBook1": {Id: "book1"},
+		"paramBook2": {Id: "book2"},
 	}
 
 	stringPointer := "valueStringPointer1"
