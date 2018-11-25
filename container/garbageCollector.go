@@ -1,3 +1,3 @@
 package container
 
-type GarbageCollectorFunc func (service interface{}) error
+type GarbageCollectorFunc func(service interface{}) error

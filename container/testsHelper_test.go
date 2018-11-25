@@ -7,7 +7,7 @@ import (
 )
 
 //ExpectPanic a helper method to simulate a panic expectation in tests, you can provide multiple possible panic variants
-func ExpectPanic( t *testing.T, expectedPanicNames ...string) {
+func ExpectPanic(t *testing.T, expectedPanicNames ...string) {
 	expectedPanicNamesFlat := strings.Join(expectedPanicNames, ",")
 
 	noPanicDetectedMessage := "There was a panic message expected '%s', but none was received"

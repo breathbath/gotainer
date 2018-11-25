@@ -6,12 +6,12 @@ type CycleDetector struct {
 	recStackSorted []string
 	visited        map[string]bool
 	cycleDetected  bool
-	cycle          [] string
+	cycle          []string
 	isEnabled      bool
 }
 
 func NewCycleDetector() *CycleDetector {
-	cd := &CycleDetector{isEnabled:true}
+	cd := &CycleDetector{isEnabled: true}
 	cd.Reset()
 	return cd
 }

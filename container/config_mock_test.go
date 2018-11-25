@@ -97,15 +97,15 @@ func getMockedConfigTree() Tree {
 		},
 		Node{Id: "web_fetcher", NewFunc: mocks.NewWebFetcher},
 		Node{Id: "in_memory_cache", NewFunc: mocks.NewInMemoryCache},
-		Node {
+		Node{
 			Parameters: map[string]interface{}{
 				"param1": "value1",
 				"param2": 123,
 			},
 			ParamProvider: mocks.ConfigProvider{},
 		},
-		Node {
-			Id: "logger",
+		Node{
+			Id:           "logger",
 			NewFunc:      mocks.BuildLogger,
 			ServiceNames: Services{"EnableLogging"},
 		},

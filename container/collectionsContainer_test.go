@@ -2,8 +2,8 @@ package container
 
 import (
 	"errors"
-	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestLazyCollectionDependencies(t *testing.T) {

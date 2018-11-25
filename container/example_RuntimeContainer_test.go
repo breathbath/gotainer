@@ -108,8 +108,8 @@ func ExampleRuntimeContainer_AddNewMethod() {
 	cont.AddNewMethod("nameProvider", NewNameProvider, "db")
 
 	nameProvider := cont.Get("nameProvider", true).(NameProvider)
-	fmt.Println(nameProvider.GetFullName("Mr"))
+	fmt.Println(nameProvider.GetFullName("Sir"))
 
 	// Output:
-	// Mr Elton John
+	// Sir Elton John
 }

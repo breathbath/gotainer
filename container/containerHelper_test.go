@@ -1,8 +1,8 @@
 package container
 
 import (
-	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestParametersAdding(t *testing.T) {
@@ -45,7 +45,7 @@ func TestParametersAdding(t *testing.T) {
 
 func TestIgnoringNilValues(t *testing.T) {
 	c := CreateContainer()
-	nilParams := map[string] map[int]int {
+	nilParams := map[string]map[int]int{
 		"nilParam": {},
 	}
 	RegisterParameters(c, nilParams)
@@ -59,7 +59,7 @@ func TestFailingForNonMapInput(t *testing.T) {
 
 func TestFailingForNonStringMapKeys(t *testing.T) {
 	c := CreateContainer()
-	err := RegisterParameters(c, map[int]int{1:22})
+	err := RegisterParameters(c, map[int]int{1: 22})
 	AssertError(err, "A map[string]interface{} should be provided to register parameters", t)
 }
 

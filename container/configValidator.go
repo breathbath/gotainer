@@ -1,9 +1,9 @@
 package container
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
-	"errors"
 )
 
 func validateNode(node Node, errCollection *[]error, tree Tree) {

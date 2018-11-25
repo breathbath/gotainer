@@ -1,9 +1,9 @@
 package container
 
 import (
-	"testing"
-	"github.com/breathbath/gotainer/container/mocks"
 	"fmt"
+	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestDefaultIsValid(t *testing.T) {
@@ -95,7 +95,7 @@ func TestMoreDefinitionsForNewFunction(t *testing.T) {
 }
 
 func TestMoreDeclarationsForConstrFunction(t *testing.T) {
-	node := 		Node{
+	node := Node{
 		Id:      "moreDefinitionsForConstrFunction",
 		NewFunc: mocks.NewConfig,
 		Ob:      Observer{Name: "someEvent"},
@@ -125,7 +125,7 @@ func TestNoIdForConstrFunction(t *testing.T) {
 }
 
 func TestServiceNamesProvidedWithoutNewFunc(t *testing.T) {
-	node := 		Node{
+	node := Node{
 		Id:           "serviceNamesWithoutNewFunc",
 		ServiceNames: []string{"someService"},
 	}

@@ -1,8 +1,8 @@
 package container
 
 import (
-	"testing"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func TestAllPresetDefinitions(t *testing.T) {

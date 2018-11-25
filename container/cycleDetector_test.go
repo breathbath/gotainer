@@ -217,7 +217,7 @@ func TestCycleDetectionWithCache(t *testing.T) {
 	cont.AddConstructor("pathRegistry", func(c Container) (interface{}, error) {
 		return "pathRegistry", nil
 	})
-	cont.AddDependencyObserver("newPath", "pathRegistry", func(pathRegistry, currentPath string){
+	cont.AddDependencyObserver("newPath", "pathRegistry", func(pathRegistry, currentPath string) {
 	})
 
 	cont.AddConstructor("rootPath", func(c Container) (interface{}, error) {
@@ -252,7 +252,7 @@ func TestCycleDetectionWithEvents(t *testing.T) {
 		return &mocks.PathsCollector{Paths: []string{}}, nil
 	})
 
-	cont.AddDependencyObserver("newPathProvider", "pathsCollector", func(pc *mocks.PathsCollector, newPathProvider mocks.PathProvider){
+	cont.AddDependencyObserver("newPathProvider", "pathsCollector", func(pc *mocks.PathsCollector, newPathProvider mocks.PathProvider) {
 		pc.AddPath(newPathProvider.GetPath())
 	})
 
@@ -260,7 +260,7 @@ func TestCycleDetectionWithEvents(t *testing.T) {
 		return &mocks.LongestPathProvider{}, nil
 	})
 
-	cont.AddDependencyObserver("possibleLongestPathProvider", "longestPathProvider", func(lpp *mocks.LongestPathProvider, newPathProvider mocks.SimplePathProvider){
+	cont.AddDependencyObserver("possibleLongestPathProvider", "longestPathProvider", func(lpp *mocks.LongestPathProvider, newPathProvider mocks.SimplePathProvider) {
 		lpp.EvaluatePath(newPathProvider.GetPath())
 	})
 

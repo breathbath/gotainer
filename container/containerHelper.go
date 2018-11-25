@@ -1,8 +1,8 @@
 package container
 
 import (
-	"reflect"
 	"errors"
+	"reflect"
 )
 
 func RegisterParameters(c Container, dependenciesMaps ...interface{}) error {

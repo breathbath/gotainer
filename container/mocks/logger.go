@@ -18,7 +18,7 @@ func (iml *InMemoryLogger) Log(message string) {
 	iml.messages = append(iml.messages, message)
 }
 
-func (iml *InMemoryLogger) GetMessages() []string{
+func (iml *InMemoryLogger) GetMessages() []string {
 	return iml.messages
 }
 

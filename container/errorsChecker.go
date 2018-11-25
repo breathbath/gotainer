@@ -11,12 +11,12 @@ func panicIfError(err error) {
 	}
 }
 
-func panicIfErrors(errors []error ) {
+func panicIfErrors(errors []error) {
 	err := mergeErrors(errors)
 	panicIfError(err)
 }
 
-func mergeErrors(errors []error ) error {
+func mergeErrors(errors []error) error {
 	if len(errors) == 0 {
 		return nil
 	}

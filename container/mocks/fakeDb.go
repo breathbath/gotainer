@@ -52,12 +52,12 @@ func (fdb *FakeDb) FindInTable(tableName, id string) (string, bool) {
 	return bookName, found
 }
 
-func (fdb *FakeDb) Destroy() (error) {
+func (fdb *FakeDb) Destroy() error {
 	fdb.isDestroyed = true
 	return nil
 }
 
-func (fdb *FakeDb) WasDestroyed() (bool) {
+func (fdb *FakeDb) WasDestroyed() bool {
 	return fdb.isDestroyed
 }
 

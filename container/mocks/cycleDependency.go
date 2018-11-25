@@ -1,12 +1,11 @@
 package mocks
 
-
 type UserProvider struct {
 	roleProvider RoleProvider
 }
 
 func NewUserProvider(roleProvider RoleProvider) UserProvider {
-	return UserProvider {roleProvider:roleProvider}
+	return UserProvider{roleProvider: roleProvider}
 }
 
 type RoleProvider struct {

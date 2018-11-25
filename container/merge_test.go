@@ -1,9 +1,9 @@
 package container
 
 import (
-	"testing"
 	"fmt"
 	"github.com/breathbath/gotainer/container/mocks"
+	"testing"
 )
 
 func setupTwoContainers() (*RuntimeContainer, *RuntimeContainer) {
@@ -67,7 +67,7 @@ func assertBookShelveContainsBook(bookShelve *mocks.BookShelve, expectedBooksAmo
 	books := bookShelve.GetBooks()
 	if expectedBooksAmount == 0 && len(books) != 0 {
 		t.Error("The Service 'book_shelve' shouldn't contain books but it has at least one book inside")
-		return;
+		return
 	}
 
 	if len(books) != expectedBooksAmount || books[0].Id != expectedBookId {
