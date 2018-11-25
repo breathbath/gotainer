@@ -13,7 +13,7 @@ func TestDefaultIsValid(t *testing.T) {
 }
 
 func TestNewFunctionIsNotFunction(t *testing.T) {
-	node := Node{NewFunc: "abc", Id: "wrongNewAsString"}
+	node := Node{NewFunc: "abc", ID: "wrongNewAsString"}
 	assertWrongNodeDeclaration(
 		node,
 		t,
@@ -26,7 +26,7 @@ func TestNewFunctionReturnsNoValues(t *testing.T) {
 	assertWrongNodeDeclaration(
 		Node{
 			NewFunc: func() {},
-			Id:      "wrongNewWrongReturnValues1",
+			ID:      "wrongNewWrongReturnValues1",
 		},
 		t,
 		"Constr function should return 1 or 2 values, but 0 values are returned [check 'wrongNewWrongReturnValues1' service]",
@@ -36,7 +36,7 @@ func TestNewFunctionReturnsNoValues(t *testing.T) {
 func TestNewFunctionReturnsNoErrors(t *testing.T) {
 	assertWrongNodeDeclaration(
 		Node{
-			Id: "wrongNewWrongReturnValues2",
+			ID: "wrongNewWrongReturnValues2",
 			NewFunc: func() (string, int) {
 				return "", 0
 			},
@@ -48,7 +48,7 @@ func TestNewFunctionReturnsNoErrors(t *testing.T) {
 
 func TestNewFunctionHasLessArgumentsThanServiceNamesCount(t *testing.T) {
 	node := Node{
-		Id: "wrongArgumentsCount",
+		ID: "wrongArgumentsCount",
 		NewFunc: func(a string) string {
 			return a
 		},
@@ -64,7 +64,7 @@ func TestNewFunctionHasLessArgumentsThanServiceNamesCount(t *testing.T) {
 
 func TestNewFunctionMissingId(t *testing.T) {
 	node := Node{
-		Id:      "",
+		ID:      "",
 		NewFunc: mocks.NewConfig,
 	}
 
@@ -78,7 +78,7 @@ func TestNewFunctionMissingId(t *testing.T) {
 
 func TestMoreDefinitionsForNewFunction(t *testing.T) {
 	node := Node{
-		Id:      "moreDefinitionsForNewFunction",
+		ID:      "moreDefinitionsForNewFunction",
 		NewFunc: mocks.NewConfig,
 		Ev:      Event{Name: "someEvent"},
 		Constr: func(c Container) (interface{}, error) {
@@ -96,7 +96,7 @@ func TestMoreDefinitionsForNewFunction(t *testing.T) {
 
 func TestMoreDeclarationsForConstrFunction(t *testing.T) {
 	node := Node{
-		Id:      "moreDefinitionsForConstrFunction",
+		ID:      "moreDefinitionsForConstrFunction",
 		NewFunc: mocks.NewConfig,
 		Ob:      Observer{Name: "someEvent"},
 	}
@@ -110,7 +110,7 @@ func TestMoreDeclarationsForConstrFunction(t *testing.T) {
 
 func TestNoIdForConstrFunction(t *testing.T) {
 	node := Node{
-		Id: "",
+		ID: "",
 		Constr: func(c Container) (interface{}, error) {
 			return "", nil
 		},
@@ -126,7 +126,7 @@ func TestNoIdForConstrFunction(t *testing.T) {
 
 func TestServiceNamesProvidedWithoutNewFunc(t *testing.T) {
 	node := Node{
-		Id:           "serviceNamesWithoutNewFunc",
+		ID:           "serviceNamesWithoutNewFunc",
 		ServiceNames: []string{"someService"},
 	}
 	assertWrongNodeDeclaration(
@@ -209,7 +209,7 @@ func TestEventRequiredFieldsNotProvided(t *testing.T) {
 func TestUnknownEventServiceIsProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
 		Node{
-			Id: "unknownEventService",
+			ID: "unknownEventService",
 			Ev: Event{Name: "someEvent", Service: "Some unknown service"},
 		},
 		t,

@@ -5,6 +5,7 @@ import (
 	"reflect"
 )
 
+//RegisterParameters adds scalar parameter values as dependencies
 func RegisterParameters(c Container, dependenciesMaps ...interface{}) error {
 	for _, currMap := range dependenciesMaps {
 		reflectedMap := reflect.ValueOf(currMap)

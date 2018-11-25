@@ -10,17 +10,17 @@ var cycleTree Tree
 func init() {
 	cycleTree = Tree{
 		Node{
-			Id:           "userProvider",
+			ID:           "userProvider",
 			NewFunc:      mocks.NewUserProvider,
 			ServiceNames: Services{"roleProvider"},
 		},
 		Node{
-			Id:           "roleProvider",
+			ID:           "roleProvider",
 			NewFunc:      mocks.NewRoleProvider,
 			ServiceNames: Services{"userProvider"},
 		},
 		Node{
-			Id:      "rightsProvider",
+			ID:      "rightsProvider",
 			NewFunc: mocks.NewRightsProvider,
 		},
 	}
@@ -30,7 +30,7 @@ func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage [check 'book_storage' service]")
 	recursiveTree := Tree{
 		Node{
-			Id:           "book_storage",
+			ID:           "book_storage",
 			NewFunc:      mocks.NewBookStorage,
 			ServiceNames: Services{"book_storage"},
 		},

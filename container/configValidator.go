@@ -54,16 +54,16 @@ func validateNewFunc(node Node, errCollection *[]error) {
 	err = assertFunctionDeclaration(reflectedNewMethod, len(node.ServiceNames), node.String())
 	addErrorToCollection(errCollection, err)
 
-	err = validateConstructorReturnValues(reflectedNewMethod, node.Id)
+	err = validateConstructorReturnValues(reflectedNewMethod, node.ID)
 	addErrorToCollection(errCollection, err)
-	assertServiceIdIsNotEmpty(node, errCollection, "The new function should be provided with a service id, see '%s'")
+	assertServiceIDIsNotEmpty(node, errCollection, "The new function should be provided with a service id, see '%s'")
 }
 
 func validateConstrFunc(node Node, errCollection *[]error) {
 	assertNewIsEmpty(node, errCollection)
 	assertEventIsEmpty(node, errCollection)
 	assertObserverIsEmpty(node, errCollection)
-	assertServiceIdIsNotEmpty(node, errCollection, "The constructor function should be provided with a non empty service id, see '%s'")
+	assertServiceIDIsNotEmpty(node, errCollection, "The constructor function should be provided with a non empty service id, see '%s'")
 }
 
 func validateObserverDefinition(node Node, errCollection *[]error) {
@@ -149,8 +149,8 @@ func assertServiceIsDeclared(serviceName, declarationPlace string, tree Tree, er
 	}
 }
 
-func assertServiceIdIsNotEmpty(node Node, errCollection *[]error, errorFormat string) {
-	if node.Id == "" {
+func assertServiceIDIsNotEmpty(node Node, errCollection *[]error, errorFormat string) {
+	if node.ID == "" {
 		registerNewErrorInCollection(errCollection, errorFormat, node)
 	}
 }

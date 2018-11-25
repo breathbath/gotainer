@@ -5,41 +5,41 @@ import "github.com/breathbath/gotainer/container/mocks"
 func getMockedConfigTree() Tree {
 	return Tree{
 		Node{
-			Id: "connection_string",
+			ID: "connection_string",
 			Constr: func(c Container) (interface{}, error) {
 				config := c.Get("config", true).(mocks.Config)
 				return config.GetValue("fakeDbConnectionString"), nil
 			},
 		},
 		Node{
-			Id:           "book_storage",
+			ID:           "book_storage",
 			NewFunc:      mocks.NewBookStorage,
 			ServiceNames: Services{"db"},
 		},
 		Node{
 			NewFunc: mocks.NewConfig,
-			Id:      "config",
+			ID:      "config",
 		},
 		Node{
-			Id: "book_creator",
+			ID: "book_creator",
 			Constr: func(c Container) (interface{}, error) {
 				return mocks.BookCreator{}, nil
 			},
 		},
 		Node{
-			Id:           "book_finder_declared_statically",
+			ID:           "book_finder_declared_statically",
 			NewFunc:      mocks.NewBookFinder,
 			ServiceNames: Services{"book_storage", "book_creator"},
 		},
 		Node{
-			Id: "book_storage_statistics_provider",
+			ID: "book_storage_statistics_provider",
 			Ev: Event{
 				Name:    "add_stats_provider",
 				Service: "book_storage",
 			},
 		},
 		Node{
-			Id: "book_finder",
+			ID: "book_finder",
 			Constr: func(c Container) (interface{}, error) {
 				var bc mocks.BookCreator
 				c.Scan("book_creator", &bc)
@@ -51,7 +51,7 @@ func getMockedConfigTree() Tree {
 			},
 		},
 		Node{
-			Id:           "db",
+			ID:           "db",
 			NewFunc:      mocks.NewFakeDb,
 			ServiceNames: Services{"connection_string"},
 			GarbageFunc: func(service interface{}) error {
@@ -60,18 +60,18 @@ func getMockedConfigTree() Tree {
 			},
 		},
 		Node{
-			Id:           "authors_storage",
+			ID:           "authors_storage",
 			NewFunc:      mocks.NewAuthorsStorage,
 			ServiceNames: Services{"db"},
 		},
 		Node{
-			Id: "authors_storage_statistics_provider",
+			ID: "authors_storage_statistics_provider",
 			Ev: Event{
 				Name:    "add_stats_provider",
 				Service: "authors_storage",
 			},
 		},
-		Node{Id: "statistics_gateway", NewFunc: mocks.NewStatisticsGateway},
+		Node{ID: "statistics_gateway", NewFunc: mocks.NewStatisticsGateway},
 		Node{
 			Ob: Observer{
 				Event: "add_stats_provider",
@@ -82,7 +82,7 @@ func getMockedConfigTree() Tree {
 			},
 		},
 		Node{
-			Id: "static_files_url",
+			ID: "static_files_url",
 			Constr: func(c Container) (interface{}, error) {
 				var config mocks.Config
 				c.Scan("config", &config)
@@ -91,12 +91,12 @@ func getMockedConfigTree() Tree {
 			},
 		},
 		Node{
-			Id:           "book_link_provider",
+			ID:           "book_link_provider",
 			NewFunc:      mocks.NewBookLinkProvider,
 			ServiceNames: Services{"static_files_url", "book_finder_declared_statically"},
 		},
-		Node{Id: "web_fetcher", NewFunc: mocks.NewWebFetcher},
-		Node{Id: "in_memory_cache", NewFunc: mocks.NewInMemoryCache},
+		Node{ID: "web_fetcher", NewFunc: mocks.NewWebFetcher},
+		Node{ID: "in_memory_cache", NewFunc: mocks.NewInMemoryCache},
 		Node{
 			Parameters: map[string]interface{}{
 				"param1": "value1",
@@ -105,7 +105,7 @@ func getMockedConfigTree() Tree {
 			ParamProvider: mocks.ConfigProvider{},
 		},
 		Node{
-			Id:           "logger",
+			ID:           "logger",
 			NewFunc:      mocks.BuildLogger,
 			ServiceNames: Services{"EnableLogging"},
 		},

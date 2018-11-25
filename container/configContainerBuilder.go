@@ -1,7 +1,9 @@
 package container
 
+//RuntimeContainerBuilder builds a Runtime container
 type RuntimeContainerBuilder struct{}
 
+//BuildContainerFromConfig given a config it will build a container
 func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) Container {
 	runtimeContainer := NewRuntimeContainer()
 
@@ -20,9 +22,9 @@ func (rc RuntimeContainerBuilder) addTreeToContainer(tree Tree, c *RuntimeContai
 
 func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer) {
 	if node.NewFunc != nil {
-		rc.addNewFunc(node.Id, node.NewFunc, node.ServiceNames, container)
+		rc.addNewFunc(node.ID, node.NewFunc, node.ServiceNames, container)
 	} else if node.Constr != nil {
-		rc.addConstr(node.Id, node.Constr, container)
+		rc.addConstr(node.ID, node.Constr, container)
 	} else if node.Ev.Service != "" {
 		rc.addEvent(node.Ev.Name, node.Ev.Service, container)
 	} else if node.Ob.Name != "" {
@@ -37,24 +39,24 @@ func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer
 	}
 
 	if node.GarbageFunc != nil {
-		container.AddGarbageCollectFunc(node.Id, node.GarbageFunc)
+		container.AddGarbageCollectFunc(node.ID, node.GarbageFunc)
 	}
 }
 
-func (rc RuntimeContainerBuilder) addNewFunc(serviceId string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {
-	container.AddNewMethod(serviceId, newFunc, serviceNames...)
+func (rc RuntimeContainerBuilder) addNewFunc(serviceID string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {
+	container.AddNewMethod(serviceID, newFunc, serviceNames...)
 }
 
-func (rc RuntimeContainerBuilder) addConstr(serviceId string, constr Constructor, container *RuntimeContainer) {
-	container.AddConstructor(serviceId, constr)
+func (rc RuntimeContainerBuilder) addConstr(serviceID string, constr Constructor, container *RuntimeContainer) {
+	container.AddConstructor(serviceID, constr)
 }
 
 func (rc RuntimeContainerBuilder) addEvent(eventName, dependencyName string, container *RuntimeContainer) {
 	container.RegisterDependencyEvent(eventName, dependencyName)
 }
 
-func (rc RuntimeContainerBuilder) addObserver(eventName, observerId string, callback interface{}, container *RuntimeContainer) {
-	container.AddDependencyObserver(eventName, observerId, callback)
+func (rc RuntimeContainerBuilder) addObserver(eventName, observerID string, callback interface{}, container *RuntimeContainer) {
+	container.AddDependencyObserver(eventName, observerID, callback)
 }
 
 func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{}, container *RuntimeContainer) {

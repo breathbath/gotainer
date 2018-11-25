@@ -5,8 +5,10 @@ import (
 	"strings"
 )
 
+//Tree of dependency nodes
 type Tree []Node
 
+//Event about registration of a specific service
 type Event struct {
 	Name    string
 	Service string
@@ -20,18 +22,21 @@ func (e Event) String() string {
 	)
 }
 
+//Services list of dependencies
 type Services []string
 
 func (ss Services) String() string {
 	return "[" + strings.Join(ss, ";") + "]"
 }
 
+//Observer is a service which is interested other services under a certain event
 type Observer struct {
 	Event    string
 	Name     string
 	Callback interface{}
 }
 
+//ParametersProvider gives container parameters
 type ParametersProvider interface {
 	GetItems() map[string]interface{}
 }
@@ -44,8 +49,9 @@ func (o Observer) String() string {
 	)
 }
 
+//Node of a dependency
 type Node struct {
-	Id            string
+	ID            string
 	Constr        Constructor
 	NewFunc       interface{}
 	ServiceNames  Services
@@ -58,17 +64,18 @@ type Node struct {
 
 func (n Node) String() string {
 	return fmt.Sprintf(
-		"Node: {Id: %s; ServiceNames: %s; Event: %s; Observer: %s}",
-		n.Id,
+		"Node: {ID: %s; ServiceNames: %s; Event: %s; Observer: %s}",
+		n.ID,
 		n.ServiceNames,
 		n.Ev,
 		n.Ob,
 	)
 }
 
-func (t Tree) ServiceExists(serviceId string) bool {
+//ServiceExists checks if the provided name was already registered for a service
+func (t Tree) ServiceExists(serviceID string) bool {
 	for _, node := range t {
-		if node.Id == serviceId {
+		if node.ID == serviceID {
 			return true
 		}
 	}

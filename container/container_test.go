@@ -41,12 +41,12 @@ func TestStaticParameterDependency(t *testing.T) {
 	container.Scan("book_link_provider", &bookLinkProvider)
 
 	url := bookLinkProvider.GetLink("one")
-	expectedUrl := "http://static.me/FirstBook"
-	if url != expectedUrl {
+	expectedURL := "http://static.me/FirstBook"
+	if url != expectedURL {
 		t.Errorf(
 			"Unexpected book url '%s' fetched, expected url is '%s'.",
 			url,
-			expectedUrl,
+			expectedURL,
 		)
 	}
 }

@@ -59,11 +59,11 @@ func TestConfigMerge(t *testing.T) {
 	configTreeToMerge := Tree{
 		Node{
 			NewFunc: mocks.NewBookShelve,
-			Id:      "book_shelve",
+			ID:      "book_shelve",
 		},
 		Node{
 			NewFunc:      mocks.NewBookRevision,
-			Id:           "book_revision",
+			ID:           "book_revision",
 			ServiceNames: Services{"book_finder_declared_statically"},
 		},
 	}

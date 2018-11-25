@@ -5,4 +5,5 @@ package container
 //Constructor func to return a Service or an error
 type Constructor func(c Container) (interface{}, error)
 
+//NewFuncConstructor func type to recognise custom user contruction functions
 type NewFuncConstructor func(c Container, isCached bool) (interface{}, error)

@@ -63,13 +63,13 @@ func TestFailingForNonStringMapKeys(t *testing.T) {
 	AssertError(err, "A map[string]interface{} should be provided to register parameters", t)
 }
 
-func assertExpectedBook(serviceId, expectedBookId string, book mocks.Book, t *testing.T) {
-	if book.Id != expectedBookId {
+func assertExpectedBook(serviceID, expectedBookID string, book mocks.Book, t *testing.T) {
+	if book.Id != expectedBookID {
 		t.Errorf(
 			"Unexpected book value for %s, received book with id %s, expected book %s",
-			serviceId,
+			serviceID,
 			book.Id,
-			expectedBookId,
+			expectedBookID,
 		)
 	}
 }

@@ -52,11 +52,13 @@ func (fdb *FakeDb) FindInTable(tableName, id string) (string, bool) {
 	return bookName, found
 }
 
+//Destroy garbage collection func
 func (fdb *FakeDb) Destroy() error {
 	fdb.isDestroyed = true
 	return nil
 }
 
+//WasDestroyed mocked func to make sure if the Destroy method was called before
 func (fdb *FakeDb) WasDestroyed() bool {
 	return fdb.isDestroyed
 }

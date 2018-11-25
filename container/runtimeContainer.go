@@ -39,8 +39,8 @@ func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}
 }
 
 //AddDependencyObserver registers Service that will receive Config it is interested in
-func (rc *RuntimeContainer) AddDependencyObserver(eventName, observerId string, observer interface{}) {
-	rc.eventsContainer.addDependencyObserver(eventName, observerId, observer)
+func (rc *RuntimeContainer) AddDependencyObserver(eventName, observerID string, observer interface{}) {
+	rc.eventsContainer.addDependencyObserver(eventName, observerID, observer)
 }
 
 //RegisterDependencyEvent notifies observers about added Config
@@ -64,7 +64,7 @@ func (rc *RuntimeContainer) ScanNonCached(id string, dest interface{}) {
 	}
 }
 
-//Scan copies a Service identified by id into a typed destination (its a pointer reference) and returns error on failure
+//ScanSecure copies a service identified by id into a typed destination (its a pointer reference) and returns error on failure
 func (rc *RuntimeContainer) ScanSecure(id string, isCached bool, dest interface{}) error {
 	baseValue, err := rc.GetSecure(id, isCached)
 	if err != nil {
@@ -85,7 +85,7 @@ func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
 	return dependency
 }
 
-//Get fetches a Service in a return argument and returns an error rather than panics
+//GetSecure fetches a Service in a return argument and returns an error rather than panics
 func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, error) {
 	if rc.rootDependency == "" {
 		rc.rootDependency = id
@@ -156,7 +156,7 @@ func (rc *RuntimeContainer) Check() {
 	rc.CollectGarbage()
 }
 
-//Check ensures that all runtime Config are created correctly
+//Exists ensures that all runtime Config are created correctly
 func (rc *RuntimeContainer) Exists(id string) bool {
 	_, exists := rc.constructors[id]
 	return exists
