@@ -1,7 +1,1 @@
-1. Recursive declarations detection
-
-    container.Node{
-        Id:           "wsClientCreator",
-        NewFunc:      websocket2.NewWsClientCreator,
-        ServiceNames: container.Services{"wsClientCreator"},
-    },
+1. Fail on duplicated service declarations
