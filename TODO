@@ -1,1 +1,2 @@
 1. Fail on duplicated service declarations
+2. Correctly resolve dynamic dependencies list like New(publishers ...PublishingService)
