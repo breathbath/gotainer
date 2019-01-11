@@ -1,3 +1,16 @@
 1. Fail on duplicated service declarations
 2. Correctly resolve dynamic dependencies list like New(publishers ...PublishingService)
 3. Failure if constructor allows nil dependency (e.g. declared as pointer) and nil is explicitly declared as dependency (or parameter)
+4. Fail container if declaration without new func or constructor func is declared:
+		container.Node{
+			Id: "service",
+			ServiceNames: container.Services{
+				"dep1",
+				"dep2",
+				"dep3",
+				"dep4",
+			},
+			GarbageFunc: func(service interface{}) error {
+				return service.(MyThing).Destroy()
+			},
+		},
