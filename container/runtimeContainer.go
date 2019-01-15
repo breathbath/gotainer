@@ -30,11 +30,13 @@ func NewRuntimeContainer() *RuntimeContainer {
 
 //AddConstructor registers a Callback to create a Service identified by id
 func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
+	rc.assertNoDuplicates(id)
 	rc.constructors[id] = constructor
 }
 
 //AddNewMethod converts a New Service method to a valid Callback Constr
 func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
+	rc.assertNoDuplicates(id)
 	rc.newFuncConstructors[id] = convertNewMethodToNewFuncConstructor(rc, typedConstructor, constructorArgumentNames, id)
 }
 
@@ -240,4 +242,13 @@ func (rc *RuntimeContainer) getCache() dependencyCache {
 //getEventsContainer exposes events for merge
 func (rc *RuntimeContainer) getEventsContainer() EventsContainer {
 	return *rc.eventsContainer
+}
+
+//assertNoDuplicates checks if current dependency was not already declared
+func (rc *RuntimeContainer) assertNoDuplicates(id string) {
+	_, constructorExists := rc.constructors[id]
+	_, newFuncExists := rc.newFuncConstructors[id]
+	if  constructorExists || newFuncExists{
+		panic(fmt.Sprintf("Detected duplicated dependency declaration '%s'", id))
+	}
 }
