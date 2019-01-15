@@ -11,6 +11,9 @@ func isFunction(reflectedConstructorFunc reflect.Value) bool {
 }
 
 func hasArgumentsCount(reflectedConstructorFunc reflect.Value, expectedArgNumbersCount int) (bool, int) {
+	if reflectedConstructorFunc.Type().IsVariadic() {
+		return true, expectedArgNumbersCount
+	}
 	argsInputCount := reflectedConstructorFunc.Type().NumIn()
 	return argsInputCount == expectedArgNumbersCount, argsInputCount
 }

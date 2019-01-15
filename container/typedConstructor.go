@@ -29,6 +29,19 @@ func convertNewMethodToNewFuncConstructor(
 	)
 
 	return func(c Container, isCached bool) (interface{}, error) {
+		if reflectedNewMethod.Type().IsVariadic() {
+			argumentsToCallNewMethod := []reflect.Value{}
+			for _, dependencyName := range newMethodArgumentNames {
+				dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
+				if err != nil {
+					return nil, err
+				}
+				reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+				argumentsToCallNewMethod = append(argumentsToCallNewMethod, reflectedDependencyFromContainer)
+			}
+			values := reflectedNewMethod.Call(argumentsToCallNewMethod)
+			return values[0].Interface(), nil
+		}
 		argumentsToCallConstructorFunc, err := getValidFunctionArguments(
 			reflectedNewMethod,
 			newMethodArgumentNames,
