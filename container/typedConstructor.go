@@ -29,19 +29,6 @@ func convertNewMethodToNewFuncConstructor(
 	)
 
 	return func(c Container, isCached bool) (interface{}, error) {
-		if reflectedNewMethod.Type().IsVariadic() {
-			argumentsToCallNewMethod := []reflect.Value{}
-			for _, dependencyName := range newMethodArgumentNames {
-				dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
-				if err != nil {
-					return nil, err
-				}
-				reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
-				argumentsToCallNewMethod = append(argumentsToCallNewMethod, reflectedDependencyFromContainer)
-			}
-			values := reflectedNewMethod.Call(argumentsToCallNewMethod)
-			return values[0].Interface(), nil
-		}
 		argumentsToCallConstructorFunc, err := getValidFunctionArguments(
 			reflectedNewMethod,
 			newMethodArgumentNames,
@@ -121,6 +108,44 @@ func getValidFunctionArguments(
 	serviceId string,
 	isCached bool,
 ) ([]reflect.Value, error) {
+	if reflectedNewMethod.Type().IsVariadic() {
+		argumentsToCallNewMethod := []reflect.Value{}
+		constructorInputCount := reflectedNewMethod.Type().NumIn()
+		var i = 0
+		var errors []error
+		for _, dependencyName := range newMethodArgumentNames {
+			i++
+			dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
+			if err != nil {
+				return nil, err
+			}
+
+			reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+			var reflectedNewMethodArgument reflect.Type
+			if i < constructorInputCount {
+				reflectedNewMethodArgument = reflectedNewMethod.Type().In(i - 1)
+			} else {
+				reflectedVariadicArgumentCollection := reflectedNewMethod.Type().In(constructorInputCount - 1)
+				reflectedNewMethodArgument = reflectedVariadicArgumentCollection.Elem()
+			}
+
+			err = assertConstructorArgumentsAreCompatible(
+				reflectedNewMethodArgument,
+				reflectedDependencyFromContainer,
+				dependencyName,
+				serviceId,
+			)
+			if err != nil {
+				errors = append(errors, err)
+				continue
+			}
+
+			argumentsToCallNewMethod = append(argumentsToCallNewMethod, reflectedDependencyFromContainer)
+		}
+
+		return argumentsToCallNewMethod, mergeErrors(errors)
+	}
+
 	constructorInputCount := reflectedNewMethod.Type().NumIn()
 	argumentsToCallNewMethod := make([]reflect.Value, constructorInputCount)
 

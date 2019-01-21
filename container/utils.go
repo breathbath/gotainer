@@ -18,7 +18,7 @@ func copySourceVariableToDestinationVariable(createdDependency interface{}, dest
 	}
 	if destinationPointerValue.IsNil() {
 		return fmt.Errorf(
-			"Please provide an initialsed variable rather than a non-initialised pointer variable [check '%s' service]",
+			"Please provide an initialized variable rather than a non-initialised pointer variable [check '%s' service]",
 			dependencyName,
 		)
 	}

@@ -151,6 +151,6 @@ func TestNonPointerVariableDestination(t *testing.T) {
 func TestNonInitialisedPointerVariableDestination(t *testing.T) {
 	cont := CreateContainer()
 	var url *string
-	defer ExpectPanic(t, "Please provide an initialsed variable rather than a non-initialised pointer variable [check 'static_files_url' service]")
+	defer ExpectPanic(t, "Please provide an initialized variable rather than a non-initialised pointer variable [check 'static_files_url' service]")
 	cont.Scan("static_files_url", url)
 }
