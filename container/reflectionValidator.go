@@ -88,6 +88,11 @@ func assertConstructorArgumentsAreCompatible(
 	if reflectedConstructorArgument.Kind() == reflect.Interface && reflectedContainerDependency.Type().Implements(reflectedConstructorArgument) {
 		return nil
 	}
+
+	realValueIsNil := reflectedContainerDependency.IsValid()
+	if (reflectedConstructorArgument.Kind() == reflect.Interface || reflectedConstructorArgument.Kind() == reflect.Ptr) && !realValueIsNil {
+		return nil
+	}
 	if reflectedConstructorArgument.Kind() != reflectedContainerDependency.Kind() ||
 		!reflectedConstructorArgument.ConvertibleTo(reflectedContainerDependency.Type()) {
 		errName := fmt.Sprintf(

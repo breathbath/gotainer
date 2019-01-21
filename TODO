@@ -1,4 +1,3 @@
-2. Correctly resolve variadic dependencies list like New(publishers ...PublishingService)
 3. Failure if constructor allows nil dependency (e.g. declared as pointer) and nil is explicitly declared as dependency (or parameter)
 4. Fail container if declaration without new func or constructor func is declared:
 		container.Node{
