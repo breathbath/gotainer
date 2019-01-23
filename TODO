@@ -1,5 +1,4 @@
-3. Failure if constructor allows nil dependency (e.g. declared as pointer) and nil is explicitly declared as dependency (or parameter)
-4. Fail container if declaration without new func or constructor func is declared:
+1. Fail container if declaration without new func or constructor func is declared:
 		container.Node{
 			Id: "service",
 			ServiceNames: container.Services{
@@ -12,4 +11,7 @@
 				return service.(MyThing).Destroy()
 			},
 		},
-5. Container should not construct dependencies when resolving events on build time
+2. Container should not construct dependencies when resolving events on build time
+3. It would be nice to change some dependencies at runtime like
+cont.Set as when using cont.AddNewMethod/AddConstructor for the same service id the duplication
+detector will complain

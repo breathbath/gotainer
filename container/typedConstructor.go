@@ -121,6 +121,7 @@ func getValidFunctionArguments(
 			}
 
 			reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+
 			var reflectedNewMethodArgument reflect.Type
 			if i < constructorInputCount {
 				reflectedNewMethodArgument = reflectedNewMethod.Type().In(i - 1)
@@ -128,6 +129,12 @@ func getValidFunctionArguments(
 				reflectedVariadicArgumentCollection := reflectedNewMethod.Type().In(constructorInputCount - 1)
 				reflectedNewMethodArgument = reflectedVariadicArgumentCollection.Elem()
 			}
+
+			reflectedDependencyFromContainer = replaceCompatibleNilDependency(
+				reflectedNewMethodArgument,
+				reflectedDependencyFromContainer,
+				dependencyFromContainer,
+			)
 
 			err = assertConstructorArgumentsAreCompatible(
 				reflectedNewMethodArgument,
@@ -162,6 +169,11 @@ func getValidFunctionArguments(
 		}
 
 		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+		reflectedDependencyFromContainer = replaceCompatibleNilDependency(
+			reflectedNewMethodArgument,
+			reflectedDependencyFromContainer,
+			dependencyFromContainer,
+		)
 
 		err = assertConstructorArgumentsAreCompatible(
 			reflectedNewMethodArgument,
@@ -177,4 +189,19 @@ func getValidFunctionArguments(
 	}
 
 	return argumentsToCallNewMethod, mergeErrors(errors)
+}
+
+//replaceCompatibleNilDependency will return correct reflect value if dependency from container is nil and it is
+//compatible with the interface or pointer constructor argument, otherwise it will return the original reflected
+//dependency
+func replaceCompatibleNilDependency(
+	reflectedConstructorArgument reflect.Type,
+	reflectedDependencyFromContainer reflect.Value,
+	dependencyFromContainer interface{},
+) reflect.Value {
+	if dependencyFromContainer == nil && (reflectedConstructorArgument.Kind() == reflect.Interface || reflectedConstructorArgument.Kind() == reflect.Ptr) {
+		return reflect.New(reflectedConstructorArgument).Elem()
+	}
+
+	return reflectedDependencyFromContainer
 }
