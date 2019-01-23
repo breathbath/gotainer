@@ -22,6 +22,11 @@ func (e Event) String() string {
 	)
 }
 
+//IsEmpty checks if Event node contains any data
+func (e Event) IsEmpty() bool {
+	return e.Name == "" && e.Service == ""
+}
+
 //Services list of dependencies
 type Services []string
 
@@ -47,6 +52,11 @@ func (o Observer) String() string {
 		o.Name,
 		o.Event,
 	)
+}
+
+//IsEmpty checks if Observer node contains any data
+func (o Observer) IsEmpty() bool {
+	return o.Name == "" && o.Event == "" && o.Callback == nil
 }
 
 //Node of a dependency

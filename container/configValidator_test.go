@@ -22,6 +22,33 @@ func TestNewFunctionIsNotFunction(t *testing.T) {
 	)
 }
 
+func TestNoConstructorNorNewMethodProvidedSecureMode(t *testing.T) {
+	node := Node{
+		ID: "someService",
+		GarbageFunc: func(service interface{}) error {
+			return nil
+		},
+	}
+	assertWrongNodeDeclarationSecure(
+		node,
+		t,
+		"A new or constructor function are expected but none was declared [check '%s' service]",
+		"someService",
+	)
+}
+
+func TestNoConstructorNorNewMethodNorIdProvidedSecureMode(t *testing.T) {
+	node := Node{
+		ID: "",
+	}
+	assertWrongNodeDeclarationSecure(
+		node,
+		t,
+		"A new or constructor function are expected but none was declared see '%s'",
+		node,
+	)
+}
+
 func TestNewFunctionReturnsNoValues(t *testing.T) {
 	assertWrongNodeDeclaration(
 		Node{
@@ -132,7 +159,7 @@ func TestServiceNamesProvidedWithoutNewFunc(t *testing.T) {
 	assertWrongNodeDeclaration(
 		node,
 		t,
-		"Services list should be defined with a non empty new func, see '%s'",
+		"A new or constructor function are expected but none was declared [check 'serviceNamesWithoutNewFunc' service];\nServices list should be defined with a non empty new func, see '%s'",
 		node,
 	)
 }
@@ -196,7 +223,7 @@ func TestEventRequiredFieldsNotProvided(t *testing.T) {
 	)
 
 	node = Node{
-		Ev: Event{Name: "someEvent"},
+		Ev: Event{Name: "add_stats_provider"},
 	}
 	assertWrongNodeDeclaration(
 		node,
@@ -210,23 +237,119 @@ func TestUnknownEventServiceIsProvided(t *testing.T) {
 	assertWrongNodeDeclaration(
 		Node{
 			ID: "unknownEventService",
-			Ev: Event{Name: "someEvent", Service: "Some unknown service"},
+			Ev: Event{Name: "add_stats_provider", Service: "Some unknown service"},
 		},
 		t,
-		"Unknown service declaration 'Some unknown service' in 'event someEvent'",
+		"Unknown service declaration 'Some unknown service' in 'event add_stats_provider'",
 	)
 }
 
+func TestConfigValidationIsTriggeredWithContainerBuilder(t *testing.T) {
+	configTree := getMockedConfigTree()
+	node := Node{
+		ID:      "",
+		NewFunc: mocks.NewConfig,
+	}
+	configTree = append(configTree, node)
+
+	_, err := RuntimeContainerBuilder{}.BuildContainerFromConfigSecure(configTree)
+
+	assertErrorText(
+		fmt.Sprintf("The new function should be provided with a service id, see '%s'", node),
+		err,
+		t,
+	)
+}
+
+//the implementation might trigger validation for each tree separately but this is not expected because
+//a subtree might reference a service in another tree which is perfectly valid
+func TestConfigValidationForMergedConfigTreesInBuilder(t *testing.T) {
+	configTree1 := getMockedConfigTree()
+	node1 := Node{
+		Ev:      Event{
+			Name: "event_me",
+			Service: "some_service_from_config_tree_2",
+		},
+	}
+	node2 := Node{
+		Ob:      Observer{
+			Event: "event_me",
+			Name: "book_creator",
+			Callback: func(bookCreator mocks.BookCreator, someStr string) {},
+		},
+	}
+	configTree1 = append(configTree1, node1, node2)
+
+	_, err := RuntimeContainerBuilder{}.BuildContainerFromConfigSecure(configTree1)
+
+	assertErrorText(
+		"Unknown service declaration 'some_service_from_config_tree_2' in 'event event_me'",
+		err,
+		t,
+	)
+
+	configTree2 := Tree{
+		Node{
+			ID: "some_service_from_config_tree_2",
+			Constr: func(c Container) (i interface{}, e error) {
+				return "some service", nil
+			},
+		},
+	}
+
+	_, err = RuntimeContainerBuilder{}.BuildContainerFromConfigSecure(configTree1, configTree2)
+	assertNoError(err, t)
+}
+
+func TestEventWithoutCorrespondingObserver(t *testing.T) {
+	configTree := getMockedConfigTree()
+	node := Node{
+		Ev:      Event{
+			Name: "some_book_event",
+			Service: "book_storage",
+		},
+	}
+	configTree = append(configTree, node)
+
+	assertWrongNodeDeclaration(
+		node,
+		t,
+		"No observer is declared for the event 'some_book_event'",
+	)
+}
+
+func assertWrongNodeDeclarationSecure(node Node, t *testing.T, expectedErrorFormat string, context ...interface{}) {
+	configTree := buildConfigTree(node)
+
+	expectedErrText := buildExpectedErrorText(expectedErrorFormat, context)
+	err := ValidateConfigSecure(configTree)
+
+	assertErrorText(expectedErrText, err, t)
+}
+
 func assertWrongNodeDeclaration(node Node, t *testing.T, expectedErrorFormat string, context ...interface{}) {
+	expectedErrText := buildExpectedErrorText(expectedErrorFormat, context)
+	defer ExpectPanic(t, expectedErrText)
+
+	configTree := buildConfigTree(node)
+
+	ValidateConfig(configTree)
+}
+
+func buildConfigTree(node Node) Tree {
 	configTree := getMockedConfigTree()
 	configTree = append(configTree, node)
+
+	return configTree
+}
+
+func buildExpectedErrorText(expectedErrorFormat string, context []interface{}) string {
 	var errorText string
 	if len(context) > 0 {
 		errorText = fmt.Sprintf(expectedErrorFormat, context...)
 	} else {
 		errorText = expectedErrorFormat
 	}
-	defer ExpectPanic(t, errorText)
 
-	ValidateConfig(configTree)
+	return errorText
 }

@@ -17,6 +17,8 @@ func validateNode(node Node, errCollection *[]error, tree Tree) {
 		return
 	}
 
+	assertConstructorOrNewFunctionAreDeclared(node, errCollection)
+
 	if len(node.ServiceNames) > 0 && node.NewFunc == nil {
 		registerNewErrorInCollection(errCollection, "Services list should be defined with a non empty new func, see '%s'", node)
 		return
@@ -33,14 +35,21 @@ func validateNode(node Node, errCollection *[]error, tree Tree) {
 	}
 }
 
-//ValidateConfig validates a tree of config options
+//ValidateConfig validates a tree of config options and panics if something is wrong
 func ValidateConfig(tree Tree) {
+	err := ValidateConfigSecure(tree)
+
+	panicIfError(err)
+}
+
+//ValidateConfigSecure validates a tree of config options and returns error if something is wrong
+func ValidateConfigSecure(tree Tree) error {
 	errs := []error{}
 	for _, node := range tree {
 		validateNode(node, &errs, tree)
 	}
 
-	panicIfErrors(errs)
+	return mergeErrors(errs)
 }
 
 func validateNewFunc(node Node, errCollection *[]error) {
@@ -99,8 +108,38 @@ func validateEventDefinition(node Node, errCollection *[]error, tree Tree) {
 	assertObserverIsEmpty(node, errCollection)
 	assertConstructorIsEmpty(node, errCollection)
 
-	if node.Ev.Service != "" {
-		assertServiceIsDeclared(node.Ev.Service, "event "+node.Ev.Name, tree, errCollection)
+	eventServiceIsFound, eventObserverIsFound := false, false
+	if node.Ev.Service == "" {
+		eventServiceIsFound = true //no need to look for empty service we skip the search function like this
+	}
+	if node.Ev.Name == "" {
+		eventObserverIsFound = true //no need to look for empty event name we skip the search function like this
+	}
+	for _, searcheableNode := range tree {
+		if eventServiceIsFound && eventObserverIsFound {
+			break
+		}
+
+		if searcheableNode.ID == node.Ev.Service {
+			eventServiceIsFound = true
+		}
+
+		if !searcheableNode.Ob.IsEmpty() && searcheableNode.Ob.Event == node.Ev.Name {
+			eventObserverIsFound = true
+		}
+	}
+	if !eventServiceIsFound {
+		addErrorToCollection(
+			errCollection,
+			fmt.Errorf("Unknown service declaration '%s' in '%s'", node.Ev.Service, "event "+node.Ev.Name),
+		)
+	}
+
+	if !eventObserverIsFound {
+		addErrorToCollection(
+			errCollection,
+			fmt.Errorf("No observer is declared for the event '%s'", node.Ev.Name),
+		)
 	}
 }
 
@@ -142,15 +181,19 @@ func addErrorToCollection(errCollection *[]error, err error) {
 	}
 }
 
-func assertServiceIsDeclared(serviceName, declarationPlace string, tree Tree, errCollection *[]error) {
-	if !tree.ServiceExists(serviceName) {
-		err := fmt.Errorf("Unknown service declaration '%s' in '%s'", serviceName, declarationPlace)
-		addErrorToCollection(errCollection, err)
-	}
-}
-
 func assertServiceIDIsNotEmpty(node Node, errCollection *[]error, errorFormat string) {
 	if node.ID == "" {
 		registerNewErrorInCollection(errCollection, errorFormat, node)
+	}
+}
+
+func assertConstructorOrNewFunctionAreDeclared(node Node, errCollection *[]error) {
+	if len(node.Parameters) == 0 && node.Ob.IsEmpty() && node.Ev.IsEmpty() && node.Constr == nil && node.NewFunc == nil {
+		err := fmt.Errorf("A new or constructor function are expected but none was declared [check '%s' service]", node.ID)
+		if node.ID == "" {
+			err = fmt.Errorf("A new or constructor function are expected but none was declared see '%s'", node)
+		}
+
+		addErrorToCollection(errCollection, err)
 	}
 }

@@ -3,15 +3,28 @@ package container
 //RuntimeContainerBuilder builds a Runtime container
 type RuntimeContainerBuilder struct{}
 
-//BuildContainerFromConfig given a config it will build a container
+//BuildContainerFromConfig given a config it will build a container, panics if config is wrong
 func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) Container {
-	runtimeContainer := NewRuntimeContainer()
-
-	for _, tree := range trees {
-		rc.addTreeToContainer(tree, runtimeContainer)
-	}
+	runtimeContainer, err := rc.BuildContainerFromConfigSecure(trees...)
+	panicIfError(err)
 
 	return runtimeContainer
+}
+
+//BuildContainerFromConfigSecure given a config it will build a container, if config is wrong an error is returned
+func (rc RuntimeContainerBuilder) BuildContainerFromConfigSecure(trees ...Tree) (Container, error) {
+	runtimeContainer := NewRuntimeContainer()
+
+	mergedTree := rc.mergeTrees(trees)
+
+	err := ValidateConfigSecure(mergedTree)
+	if err != nil {
+		return runtimeContainer, err
+	}
+
+	rc.addTreeToContainer(mergedTree, runtimeContainer)
+
+	return runtimeContainer, nil
 }
 
 func (rc RuntimeContainerBuilder) addTreeToContainer(tree Tree, c *RuntimeContainer) {
@@ -66,4 +79,13 @@ func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{
 func (rc RuntimeContainerBuilder) addParametersProvider(parametersProvider ParametersProvider, container *RuntimeContainer) {
 	parameters := parametersProvider.GetItems()
 	rc.addParameters(parameters, container)
+}
+
+func (rc RuntimeContainerBuilder) mergeTrees(trees []Tree) Tree {
+	mergedTree := []Node{}
+	for _, tree := range trees {
+		mergedTree = append(mergedTree, tree...)
+	}
+
+	return Tree(mergedTree)
 }
