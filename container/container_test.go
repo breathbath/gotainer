@@ -110,3 +110,58 @@ func TestExistsFunction(t *testing.T) {
 		t.Errorf("The service '%s' should not exist", "some_non_existing_service")
 	}
 }
+
+func TestSettingConstructor(t *testing.T) {
+	cont := CreateContainer()
+	cont.SetConstructor("someService", func(c Container) (i interface{}, e error) {
+		return "currentName", nil
+	})
+
+	cont.SetConstructor("someService", func(c Container) (i interface{}, e error) {
+		return "overriddenName", nil
+	})
+
+	actualValue := cont.Get("someService", true).(string)
+	if actualValue != "overriddenName" {
+		t.Errorf(
+			"Expected service 'someService' is not equal to returned '%s' value. Second constructor declaration for 'someService' should override an existing declaration",
+			actualValue,
+		)
+	}
+
+	cont.AddConstructor("addedService", func(c Container) (i interface{}, e error) {
+		return "addedServiceName", nil
+	})
+	cont.SetConstructor("addedService", func(c Container) (i interface{}, e error) {
+		return "overriddenAddedServiceName", nil
+	})
+
+	actualValue = cont.Get("addedService", true).(string)
+	if actualValue != "overriddenAddedServiceName" {
+		t.Errorf(
+			"Expected service 'overriddenAddedServiceName' is not equal to returned '%s' value. Second constructor declaration for 'addedService' should override an existing declaration",
+			actualValue,
+		)
+	}
+}
+
+func TestSettingNewMethod(t *testing.T) {
+	cont := CreateContainer()
+	newMethod1 := func() int {
+		return 1
+	}
+	newMethod2 := func() int {
+		return 2
+	}
+
+	cont.SetNewMethod("counter", newMethod1)
+	cont.SetNewMethod("counter", newMethod2)
+
+	actualValue := cont.Get("counter", true).(int)
+	if actualValue != 2 {
+		t.Errorf(
+			"Expected service '2' is not equal to returned '%d' value. Second new method declaration for 'counter' should override an existing declaration",
+			actualValue,
+		)
+	}
+}

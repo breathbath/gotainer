@@ -13,6 +13,8 @@ type Container interface {
 	Exists(id string) bool
 	AddGarbageCollectFunc(serviceName string, gcFunc GarbageCollectorFunc)
 	CollectGarbage() error
+	SetConstructor(id string, constructor Constructor)
+	SetNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string)
 }
 
 //MergeableContainer containers that support merging

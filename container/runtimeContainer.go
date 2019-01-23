@@ -28,15 +28,25 @@ func NewRuntimeContainer() *RuntimeContainer {
 	}
 }
 
-//AddConstructor registers a Callback to create a Service identified by id
+//AddConstructor registers a Callback to create a Service identified by id, panics if id was already declared
 func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
 	rc.assertNoDuplicates(id)
+	rc.SetConstructor(id, constructor)
+}
+
+//SetConstructor adds a new service if it's not existing or overrides an existing one
+func (rc *RuntimeContainer) SetConstructor(id string, constructor Constructor) {
 	rc.constructors[id] = constructor
 }
 
-//AddNewMethod converts a New Service method to a valid Callback Constr
+//AddNewMethod converts a New Service method to a valid Callback Constr, panics if id already exists
 func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
 	rc.assertNoDuplicates(id)
+	rc.SetNewMethod(id, typedConstructor, constructorArgumentNames...)
+}
+
+//SetNewMethod overrides an existing service declaration or adds a new one if it doesn't exist
+func (rc *RuntimeContainer) SetNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
 	rc.newFuncConstructors[id] = convertNewMethodToNewFuncConstructor(rc, typedConstructor, constructorArgumentNames, id)
 }
 

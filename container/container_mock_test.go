@@ -12,9 +12,19 @@ type ContainerInterfaceMock struct {
 func (ci *ContainerInterfaceMock) AddConstructor(id string, constructor Constructor) {
 
 }
+
+func (ci *ContainerInterfaceMock) SetConstructor(id string, constructor Constructor) {
+
+}
+
 func (ci *ContainerInterfaceMock) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
 
 }
+
+func (ci *ContainerInterfaceMock) SetNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
+
+}
+
 func (ci *ContainerInterfaceMock) Scan(id string, dest interface{}) {
 
 }
