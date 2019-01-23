@@ -2,6 +2,7 @@ package container
 
 import (
 	"github.com/breathbath/gotainer/container/mocks"
+	"os"
 	"testing"
 )
 
@@ -164,4 +165,43 @@ func TestSettingNewMethod(t *testing.T) {
 			actualValue,
 		)
 	}
+}
+
+/**
+In my prod code I would do
+	cont := CreateContainerForPaymentsCase()
+	registrator := cont.Get("registrator", true).(Registrator)
+	err := registrator.RegisterUser("client_1")
+ */
+//now I can test how registrator handles error responses from the payment gateway
+func TestRegistrationPaymentGatewayFailure(t *testing.T) {
+	cont := CreateContainerForPaymentsCase()
+	//here I am replacing the NewRealPaymentGateway with the NewFailingPaymentGateway as both return
+	//implementation of PaymentGateway interface so no failure will happen
+	cont.SetNewMethod("paymentGateway", mocks.NewFailingPaymentGateway)
+
+	//now the registrator contains instead of RealPaymentGateway the FailingPaymentGateway so I can test my case
+	registrator := cont.Get("registrator", true).(mocks.Registrator)
+	err := registrator.RegisterUser("client_1")
+
+	//I expect that the registrator just forwards the original api error and of course that the replacement took place
+	if err.Error() != "Cannot connect to external api" {
+		t.Errorf(
+			"Unexpected error is returned: %v, expected exception is 'Cannot connect to external api'",
+			err,
+		)
+	}
+}
+
+func CreateContainerForPaymentsCase() *RuntimeContainer {
+	cont := NewRuntimeContainer()
+	cont.AddConstructor("secretKey", func(c Container) (i interface{}, e error) {
+		//even if we replace env var with some fake key in testing env
+		// we still will do real call to the external payment gateway
+		return os.Getenv("PAYMENT_SECRET_KEY"), nil
+	})
+	cont.AddNewMethod("paymentGateway", mocks.NewRealPaymentGateway, "secretKey")
+	cont.AddNewMethod("registrator", mocks.NewRegistrator, "paymentGateway")
+
+	return cont
 }

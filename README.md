@@ -456,6 +456,12 @@ do it in an integration test as:
             container.Check()
         }
 
+It's not recommended to use this method in production env, as it might lead to performance issues. The "Check" method
+requires creation of all services from the container, which of course can be avoided for many use cases.
+Imagine that you trigger a db migration function which requires to initialise only the database service. Calling "Check" here
+will initialise a lot of not needed services. 
+On the other hand using testing allows to validate all container dependencies before pushing code to production.
+
 ## Dependencies cache
 Dependencies cache is a in-memory storage for dependencies allowing to retrieve a service in an initialized state. 
 This gives a great opportunity to share services between different consumers to spare time for initialisation. 
@@ -670,3 +676,43 @@ dependencies initialisation.
 To detect possible cycles in a container, you should trigger the container's `Check` function in a go test. 
 We recommend to create a simple test as mentioned [here](https://github.com/breathbath/gotainer#testing) and setup a CI env
 to detect cycles before the faulty code goes to production.
+
+## Duplicates detection
+It's very common that service declarations are copy pasted. But sometimes you might forget to change the pasted service id. 
+The default behaviour of the RuntimeContainer is to override all duplicates with the latest values.
+
+So if you declare a "proxyProvider" service of ProxyProvider struct and FileManager struct under the same name, you might expect that both
+are available. So you fetch "proxyProvider" from the container and get an error that the type of the value is wrong. So you check the config again 
+and find "proxyProvider" service of ProxyProvider type. Everything looks fine but the error is still there.
+
+To avoid such kind of situations, a duplicates detector was added to the RuntimeContainer, which will complain if you try to declare the same
+service more than once.
+
+The duplicates detector is triggered every time you use `AddConstructor` or `AddNewMethod` of the `RuntimeContainer` as well as for config definitions.
+
+If you want to declare services without duplicates detector (e.g. for overriding existing services at runtime) you might use the `SetNewMethod` and `SetConstructor`
+functions.
+
+## Overriding existing services
+Overriding existing services is very helpful in testing environments, where you want to replace some resource critical services with their mocked implementations.
+
+A typical example might be a service which calls an external API e.g. payment gateway. Of course doing this in testing env is a very bad idea, as we don't want
+to create real payments for our testing scenarios. The problem is easily solved by replacing "payment" service with some dummy, which mimics payment gateway
+responses. 
+
+To demonstrate the case for replacement of a service in a testing env, please have a look at the TestRegistrationPaymentGatewayFailure test and the
+PaymentGateway.go file in mocks folder.
+
+It's not recommended to override existing services in prod environment. The complexity of the services initialisation should be encapsulated in the container
+rather than outside of it. You should remember that the container is not a part of your business logic, it's just a helper to reduce the boilerplate code
+and arrange initialization code in one place.
+
+So doing something like:
+
+        cont := BuildMyAppContainer()
+        if os.Getenv("IS_PROXY_DISABLED") {
+            cont.SetNewMethod("proxy", NewNullProxy)
+        }
+
+is a bad idea, because the container becomes part of your business logic,
+and the initialization details are not encapsulated in the container as they are exposed to the outside caller.
