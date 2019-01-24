@@ -80,7 +80,6 @@ func TestNoConstructorCalledIfItsNotInvolvedInDependencyChain(t *testing.T) {
 	runtimeContainer := CreateContainer()
 	failingNewFunc := func() string {
 		panic("Should not be called")
-		return ""
 	}
 	runtimeContainer.AddNewMethod("some_failing_service", failingNewFunc)
 	runtimeContainer.RegisterDependencyEvent("statistics_provider", "some_failing_service")
