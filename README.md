@@ -726,7 +726,7 @@ A typical example might be a service which calls an external API e.g., a payment
 creating real payments for our test scenarios. The problem is easily solved by replacing the payment service with a dummy code, which mimics real API responses.
 
 You can find an example for this use case in [this test](https://github.com/breathbath/gotainer/blob/master/container/container_test.go#L177)
-as well as [here] (https://github.com/breathbath/gotainer/blob/master/container/mocks/paymentGateway.go).
+as well as [here](https://github.com/breathbath/gotainer/blob/master/container/mocks/paymentGateway.go).
 
 It's hard to imagine a valid use case for using services overriding in a prod environment. The complexity of initialisation logic
 should be encapsulated in the container rather than in the code outside.
