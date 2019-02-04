@@ -36,7 +36,12 @@ func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 		},
 	}
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(recursiveTree)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(recursiveTree)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	cont.Check()
 }
 
@@ -59,7 +64,12 @@ func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
 		"Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]",
 	)
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	cont.Get("userProvider", true)
 }
 
@@ -157,8 +167,13 @@ func TestCyclicAndNonCyclicDependencies(t *testing.T) {
 }
 
 func TestCycleDetectionWithSecureMethod(t *testing.T) {
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
-	_, err := cont.GetSecure("userProvider", true)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(cycleTree)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = cont.GetSecure("userProvider", true)
 	expectedErrorText := "Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]"
 	if err.Error() != expectedErrorText {
 		t.Errorf("Error %s expected but %s was received", expectedErrorText, err.Error())

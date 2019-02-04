@@ -31,7 +31,12 @@ func TestVariadicConfigDependencies(t *testing.T) {
 		},
 	}
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	urlsProvider := cont.Get("urlProvider", true).(mocks.UrlProvider)
 	urls := urlsProvider.GetUrls()
 	if urls[0] != "some_url1" || urls[1] != "some_url2" {
@@ -82,7 +87,11 @@ func TestWrongVariadicConfigDependencies(t *testing.T) {
 		"Cannot use the provided dependency 'bookShelve' of type '*mocks.BookShelve' as 'string' in the Constr function call [check 'urlProvider' service]",
 	)
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	cont.Get("urlProvider", true)
 }
 
@@ -106,7 +115,12 @@ func TestPartiallyWrongVariadicConfigDependencies(t *testing.T) {
 		"Cannot use the provided dependency 'some_list' of type '[]string' as 'string' in the Constr function call [check 'urlProvider' service]",
 	)
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	cont.Get("urlProvider", true)
 }
 

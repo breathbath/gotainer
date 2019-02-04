@@ -112,7 +112,7 @@ func getMockedConfigTree() Tree {
 	}
 }
 
-func buildContainerFromMockedConfig() Container {
+func buildContainerFromMockedConfig() (Container, error) {
 	configTree := getMockedConfigTree()
 	return RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree)
 }

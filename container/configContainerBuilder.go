@@ -4,11 +4,10 @@ package container
 type RuntimeContainerBuilder struct{}
 
 //BuildContainerFromConfig given a config it will build a container, panics if config is wrong
-func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) Container {
+func (rc RuntimeContainerBuilder) BuildContainerFromConfig(trees ...Tree) (Container, error) {
 	runtimeContainer, err := rc.BuildContainerFromConfigSecure(trees...)
-	panicIfError(err)
 
-	return runtimeContainer
+	return runtimeContainer, err
 }
 
 //BuildContainerFromConfigSecure given a config it will build a container, if config is wrong an error is returned
@@ -22,18 +21,24 @@ func (rc RuntimeContainerBuilder) BuildContainerFromConfigSecure(trees ...Tree) 
 		return runtimeContainer, err
 	}
 
-	rc.addTreeToContainer(mergedTree, runtimeContainer)
+	err = rc.addTreeToContainer(mergedTree, runtimeContainer)
 
-	return runtimeContainer, nil
+	return runtimeContainer, err
 }
 
-func (rc RuntimeContainerBuilder) addTreeToContainer(tree Tree, c *RuntimeContainer) {
+func (rc RuntimeContainerBuilder) addTreeToContainer(tree Tree, c *RuntimeContainer) (err error) {
+	errors := []error{}
 	for _, node := range tree {
-		rc.addNode(node, c)
+		err = rc.addNode(node, c)
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
+
+	return mergeErrors(errors)
 }
 
-func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer) {
+func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer) (err error) {
 	if node.NewFunc != nil {
 		rc.addNewFunc(node.ID, node.NewFunc, node.ServiceNames, container)
 	} else if node.Constr != nil {
@@ -45,15 +50,23 @@ func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer
 	}
 
 	if node.Parameters != nil {
-		rc.addParameters(node.Parameters, container)
+		err = rc.addParameters(node.Parameters, container)
+		if err != nil {
+			return err
+		}
 	}
 	if node.ParamProvider != nil {
-		rc.addParametersProvider(node.ParamProvider, container)
+		err = rc.addParametersProvider(node.ParamProvider, container)
+		if err != nil {
+			return err
+		}
 	}
 
 	if node.GarbageFunc != nil {
 		container.AddGarbageCollectFunc(node.ID, node.GarbageFunc)
 	}
+
+	return nil
 }
 
 func (rc RuntimeContainerBuilder) addNewFunc(serviceID string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {
@@ -72,13 +85,13 @@ func (rc RuntimeContainerBuilder) addObserver(eventName, observerID string, call
 	container.AddDependencyObserver(eventName, observerID, callback)
 }
 
-func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{}, container *RuntimeContainer) {
-	RegisterParameters(container, parameters)
+func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{}, container *RuntimeContainer) error {
+	return RegisterParameters(container, parameters)
 }
 
-func (rc RuntimeContainerBuilder) addParametersProvider(parametersProvider ParametersProvider, container *RuntimeContainer) {
+func (rc RuntimeContainerBuilder) addParametersProvider(parametersProvider ParametersProvider, container *RuntimeContainer) error {
 	parameters := parametersProvider.GetItems()
-	rc.addParameters(parameters, container)
+	return rc.addParameters(parameters, container)
 }
 
 func (rc RuntimeContainerBuilder) mergeTrees(trees []Tree) Tree {

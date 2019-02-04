@@ -115,7 +115,12 @@ func TestHybridConfigWithDirectDuplicatesDeclaration(t *testing.T) {
 		"Detected duplicated dependency declaration 'db'",
 	)
 
-	cont := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	cont, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(exampleConfig)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	cont.AddNewMethod("db", mocks.NewBookShelve)
 }
 

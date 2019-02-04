@@ -6,7 +6,11 @@ import (
 )
 
 func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
-	container := buildContainerFromMockedConfig()
+	container, err := buildContainerFromMockedConfig()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	var config mocks.Config
 	container.Scan("config", &config)
@@ -33,7 +37,11 @@ func TestAllDependencyTypesCreatedFromConfigCorrectly(t *testing.T) {
 }
 
 func TestParameters(t *testing.T) {
-	container := buildContainerFromMockedConfig()
+	container, err := buildContainerFromMockedConfig()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	AssertExpectedDependency(container, "param1", "value1", t)
 	AssertExpectedDependency(container, "param2", 123, t)
@@ -68,7 +76,11 @@ func TestConfigMerge(t *testing.T) {
 		},
 	}
 
-	container := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree, configTreeToMerge)
+	container, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(configTree, configTreeToMerge)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	var bookShelve mocks.BookShelve
 	container.Scan("book_shelve", &bookShelve)
@@ -88,7 +100,12 @@ func TestConfigMerge(t *testing.T) {
 }
 
 func TestConfigGarbageCollectionSuccess(t *testing.T) {
-	container := buildContainerFromMockedConfig()
+	container, err := buildContainerFromMockedConfig()
+	if err != nil {
+		t.Errorf("Unexpected error %v during the garbage collection", err)
+		return
+	}
+
 	fakeDb := container.Get("db", true).(*mocks.FakeDb)
 
 	if fakeDb.WasDestroyed() {
@@ -96,7 +113,7 @@ func TestConfigGarbageCollectionSuccess(t *testing.T) {
 		return
 	}
 
-	err := container.CollectGarbage()
+	err = container.CollectGarbage()
 	if err != nil {
 		t.Errorf("Unexpected error %v during the garbage collection", err)
 		return
