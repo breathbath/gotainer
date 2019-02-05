@@ -25,7 +25,8 @@ func TestParametersAdding(t *testing.T) {
 	stringPointer := "valueStringPointer1"
 	pointerParams := map[string]*string{"paramStringPointer1": &stringPointer}
 
-	RegisterParameters(c, stringParams, boolParams, intParams, int64Params, bookParams, pointerParams)
+	err := RegisterParameters(c, stringParams, boolParams, intParams, int64Params, bookParams, pointerParams)
+	assertNoError(err, t)
 
 	AssertExpectedDependency(c, "paramString1", "valueString1", t)
 	AssertExpectedDependency(c, "paramString2", "valueString2", t)
@@ -48,7 +49,8 @@ func TestIgnoringNilValues(t *testing.T) {
 	nilParams := map[string]map[int]int{
 		"nilParam": {},
 	}
-	RegisterParameters(c, nilParams)
+	err := RegisterParameters(c, nilParams)
+	assertNoError(err, t)
 }
 
 func TestFailingForNonMapInput(t *testing.T) {

@@ -8,41 +8,53 @@ import (
 
 //ExpectPanic a helper method to simulate a panic expectation in tests, you can provide multiple possible panic variants
 func ExpectPanic(t *testing.T, expectedPanicNames ...string) {
-	expectedPanicNamesFlat := strings.Join(expectedPanicNames, ",")
+	ExpectErrorVariant(recover(), t, expectedPanicNames...)
+}
+
+func ExpectErrorSubmatch(err error, expectedSubmatch string, t *testing.T, ) {
+	if strings.Contains(err.Error(), expectedSubmatch) {
+		return
+	}
+	t.Errorf("The returned error '%s' is expected to contain '%s' but it does not", err.Error(), expectedSubmatch)
+}
+
+//ExpectErrorVariant a helper method to check errors in tests, you can provide multiple possible error variants
+func ExpectErrorVariant(err interface{}, t *testing.T, expectedErrorMessages ...string) {
+	expectedPanicNamesFlat := strings.Join(expectedErrorMessages, ",")
 
 	noPanicDetectedMessage := "There was a panic message expected '%s', but none was received"
 	unexpectedPanicMessage := "\nWrong panic message:(-expected message, +provided message)\n- %s\n+ %s"
-	if len(expectedPanicNames) > 1 {
+	if len(expectedErrorMessages) > 1 {
 		noPanicDetectedMessage = "There were panic variants expected [%s], but none was received"
 		unexpectedPanicMessage = "\nWrong panic message:(-expected message variants, +provided message)\n- %s\n+ %s"
 	}
 
-	err := recover()
 	if err == nil {
-		if len(expectedPanicNames) == 0 {
+		if len(expectedErrorMessages) == 0 {
 			return
 		}
 
-		t.Fatalf(noPanicDetectedMessage, expectedPanicNamesFlat)
+		t.Errorf(noPanicDetectedMessage, expectedPanicNamesFlat)
 	}
-	var panicMessage string
+
+	var errorMessage string
 
 	switch errorName := err.(type) {
 	case string:
-		panicMessage = errorName
+		errorMessage = errorName
 	case error:
-		panicMessage = errorName.Error()
+		errorMessage = errorName.Error()
 	default:
-		panicMessage = "Unknown error type"
+		errorMessage = "Unknown error type"
 	}
 
-	for _, expectedPanicName := range expectedPanicNames {
-		if panicMessage == expectedPanicName {
+	for _, expectedPanicName := range expectedErrorMessages {
+		if errorMessage == expectedPanicName {
 			return
 		}
 	}
 
-	t.Fatalf(unexpectedPanicMessage, expectedPanicNamesFlat, panicMessage)
+	t.Errorf(unexpectedPanicMessage, expectedPanicNamesFlat, errorMessage)
 }
 
 func AssertExpectedDependency(c Container, dependencyName string, expectedValue interface{}, t *testing.T) {

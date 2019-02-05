@@ -16,17 +16,18 @@ func convertNewMethodToNewFuncConstructor(
 	newMethod interface{},
 	newMethodArgumentNames []string,
 	serviceId string,
-) NewFuncConstructor {
-
+) (NewFuncConstructor, error) {
 	reflectedNewMethod := reflect.ValueOf(newMethod)
 
-	panicIfError(
-		assertFunctionDeclaration(reflectedNewMethod, len(newMethodArgumentNames), serviceId),
-	)
+	err := assertFunctionDeclaration(reflectedNewMethod, len(newMethodArgumentNames), serviceId)
+	if err != nil {
+		return nil, err
+	}
 
-	panicIfError(
-		validateConstructorReturnValues(reflectedNewMethod, serviceId),
-	)
+	err = validateConstructorReturnValues(reflectedNewMethod, serviceId)
+	if err != nil {
+		return nil, err
+	}
 
 	return func(c Container, isCached bool) (interface{}, error) {
 		argumentsToCallConstructorFunc, err := getValidFunctionArguments(
@@ -48,7 +49,7 @@ func convertNewMethodToNewFuncConstructor(
 			return collectErrorAndResult(values[1], values[0])
 		}
 		return values[0].Interface(), nil
-	}
+	}, nil
 }
 
 func collectErrorAndResult(reflectedErrorValue, reflectedServiceValue reflect.Value) (interface{}, error) {
@@ -72,31 +73,53 @@ func getErrorOrNil(value reflect.Value) error {
 //wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback converts something like func(Observer Observer, dependency Dependency)
 // which is customObserverResolver to func(Observer interface{}, dependency interface{}) which is serviceNotificationCallback
 //as customObserverResolver can be anything we need to make sure that function
-func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(customObserverResolver interface{}, eventName, observerId string) serviceNotificationCallback {
+func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(
+	customObserverResolver interface{},
+	eventName,
+	observerId string,
+) (serviceNotificationCallback, error) {
 	reflectedCustomObserverResolver := reflect.ValueOf(customObserverResolver)
-	panicIfError(assertFunctionDeclaration(reflectedCustomObserverResolver, 2, observerId))
+	err := assertFunctionDeclaration(reflectedCustomObserverResolver, 2, observerId)
+	if err != nil {
+		return nil, err
+	}
 
 	//here we redirect a call to func(Observer interface{}, dependency interface{}) into
 	// func(Observer Observer, dependency Dependency) which was given as customObserverResolver
-	return func(observer interface{}, dependency interface{}) {
+	return func(observer interface{}, dependency interface{}) error {
 		argumentsToCallCustomerObserverResolver := make([]reflect.Value, 2)
 
 		reflectedObserver := reflect.ValueOf(observer)
 		reflectedFirstResolverArgument := reflectedCustomObserverResolver.Type().In(0)
-		panicIfError(assertConstructorArgumentsAreCompatible(
-			reflectedFirstResolverArgument, reflectedObserver, observerId, observerId),
+		err := assertConstructorArgumentsAreCompatible(
+			reflectedFirstResolverArgument,
+			reflectedObserver,
+			observerId,
+			observerId,
 		)
+		if err != nil {
+			return err
+		}
+
 		argumentsToCallCustomerObserverResolver[0] = reflectedObserver
 
 		reflectedDependency := reflect.ValueOf(dependency)
 		reflectedSecondResolverArgument := reflectedCustomObserverResolver.Type().In(1)
-		panicIfError(assertConstructorArgumentsAreCompatible(
-			reflectedSecondResolverArgument, reflectedDependency, eventName, observerId),
+		err = assertConstructorArgumentsAreCompatible(
+			reflectedSecondResolverArgument,
+			reflectedDependency,
+			eventName,
+			observerId,
 		)
+		if err != nil {
+			return err
+		}
+
 		argumentsToCallCustomerObserverResolver[1] = reflectedDependency
 
 		reflectedCustomObserverResolver.Call(argumentsToCallCustomerObserverResolver)
-	}
+		return nil
+	}, nil
 }
 
 //getValidFunctionArguments fetches Config by ids defined in newMethodArgumentNames and validates if they are convertable

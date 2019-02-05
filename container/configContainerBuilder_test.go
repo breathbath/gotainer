@@ -62,6 +62,29 @@ func TestParameters(t *testing.T) {
 	}
 }
 
+func TestBuildingWithWrongObserverDeclaration(t *testing.T) {
+	config := Tree{
+		Node{
+			NewFunc: mocks.NewBookShelve,
+			ID:      "book_shelve",
+		},
+		Node{
+			Ob: Observer{
+				"some_event",
+				"some_name",
+				"not_function",
+			},
+		},
+	}
+
+	_, err := RuntimeContainerBuilder{}.BuildContainerFromConfig(config)
+	AssertError(
+		err,
+		"A function is expected rather than 'string' [check 'Node: {ID: ; ServiceNames: []; Event: {Name: ; Service: ;}; Observer: {Name: some_name; Event: some_event;}}' service]",
+		t,
+	)
+}
+
 func TestConfigMerge(t *testing.T) {
 	configTree := getMockedConfigTree()
 	configTreeToMerge := Tree{
@@ -96,6 +119,17 @@ func TestConfigMerge(t *testing.T) {
 
 	if connectionString != "someConnectionString" {
 		t.Error("A wrong service declaration for 'connection_string' is returned from the container after config merge")
+	}
+}
+
+func TestConfigServiceExistence(t *testing.T) {
+	configTree := getMockedConfigTree()
+	if !configTree.ServiceExists("connection_string") {
+		t.Errorf("It is expected that 'connection_string' parameter exits but it's not")
+	}
+
+	if configTree.ServiceExists("some_non_existing_service") {
+		t.Errorf("It is expected that 'some_non_existing_service' parameter does not exist, but it does")
 	}
 }
 

@@ -103,14 +103,30 @@ func TestFailureOnCustomConstructorError(t *testing.T) {
 
 func TestWrongArgumentsCountInNewMethod(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic(t, "The function requires 2 arguments, but 3 arguments are provided [check 'wrong_arg_count_dependency' service]")
-	cont.AddNewMethod("wrong_arg_count_dependency", mocks.NewBookFinder, "book_storage", "book_creator", "Config")
+
+	err := cont.AddNewMethod(
+		"wrong_arg_count_dependency",
+		mocks.NewBookFinder,
+		"book_storage",
+		"book_creator",
+		"Config",
+	)
+
+	AssertError(
+		err,
+		"The function requires 2 arguments, but 3 arguments are provided [check 'wrong_arg_count_dependency' service]",
+		t,
+	)
 }
 
 func TestNewMethodIsNotFunc(t *testing.T) {
 	cont := CreateContainer()
-	defer ExpectPanic(t, "A function is expected rather than 'string' [check 'wrong_new_method_dependency' service]")
-	cont.AddNewMethod("wrong_new_method_dependency", "non_func")
+	err := cont.AddNewMethod("wrong_new_method_dependency", "non_func")
+	AssertError(
+		err,
+		"A function is expected rather than 'string' [check 'wrong_new_method_dependency' service]",
+		t,
+	)
 }
 
 func TestValidationOfReturnsCountInNewMethod(t *testing.T) {
@@ -118,8 +134,12 @@ func TestValidationOfReturnsCountInNewMethod(t *testing.T) {
 	someBadNewFunc := func() (int, error, bool) {
 		return 1, errors.New("some error"), true
 	}
-	defer ExpectPanic(t, "Constr function should return 1 or 2 values, but 3 values are returned [check 'wrong_return_count_dependency' service]")
-	cont.AddNewMethod("wrong_return_count_dependency", someBadNewFunc)
+	err := cont.AddNewMethod("wrong_return_count_dependency", someBadNewFunc)
+	AssertError(
+		err,
+		"Constr function should return 1 or 2 values, but 3 values are returned [check 'wrong_return_count_dependency' service]",
+		t,
+	)
 }
 
 func TestNewMethodWithTwoReturnsHasAtLeastOneError(t *testing.T) {
@@ -127,8 +147,12 @@ func TestNewMethodWithTwoReturnsHasAtLeastOneError(t *testing.T) {
 	someBadNewFunc := func() (int, bool) {
 		return 1, true
 	}
-	defer ExpectPanic(t, "Constr function with 2 returned values should return at least one error interface [check 'wrong_two_returns_with_no_error_dependency' service]")
-	cont.AddNewMethod("wrong_two_returns_with_no_error_dependency", someBadNewFunc)
+	err := cont.AddNewMethod("wrong_two_returns_with_no_error_dependency", someBadNewFunc)
+	AssertError(
+		err,
+		"Constr function with 2 returned values should return at least one error interface [check 'wrong_two_returns_with_no_error_dependency' service]",
+		t,
+	)
 }
 
 func TestNewMethodReturnError(t *testing.T) {

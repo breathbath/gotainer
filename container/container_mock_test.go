@@ -9,20 +9,28 @@ type ContainerInterfaceMock struct {
 	service           interface{}
 }
 
-func (ci *ContainerInterfaceMock) AddConstructor(id string, constructor Constructor) {
-
+func (ci *ContainerInterfaceMock) AddConstructor(id string, constructor Constructor) error {
+	return nil
 }
 
 func (ci *ContainerInterfaceMock) SetConstructor(id string, constructor Constructor) {
 
 }
 
-func (ci *ContainerInterfaceMock) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-
+func (ci *ContainerInterfaceMock) AddNewMethod(
+	id string,
+	typedConstructor interface{},
+	constructorArgumentNames ...string,
+) error {
+	return nil
 }
 
-func (ci *ContainerInterfaceMock) SetNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-
+func (ci *ContainerInterfaceMock) SetNewMethod(
+	id string,
+	typedConstructor interface{},
+	constructorArgumentNames ...string,
+) error {
+	return nil
 }
 
 func (ci *ContainerInterfaceMock) Scan(id string, dest interface{}) {
@@ -46,8 +54,8 @@ func (ci *ContainerInterfaceMock) GetSecure(id string, isCached bool) (interface
 	return ci.Get(id, isCached), nil
 }
 
-func (ci *ContainerInterfaceMock) Check() {
-
+func (ci *ContainerInterfaceMock) Check() error {
+	return nil
 }
 
 func (ci *ContainerInterfaceMock) SetServiceToReturn(service interface{}) {

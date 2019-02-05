@@ -27,7 +27,6 @@ func init() {
 }
 
 func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
-	defer ExpectPanic(t, "Detected dependencies' cycle: book_storage->book_storage [check 'book_storage' service]")
 	recursiveTree := Tree{
 		Node{
 			ID:           "book_storage",
@@ -42,7 +41,8 @@ func TestSelfReferenceFailureWithConfigDeclaration(t *testing.T) {
 		return
 	}
 
-	cont.Check()
+	err = cont.Check()
+	AssertError(err, "Detected dependencies' cycle: book_storage->book_storage [check 'book_storage' service]", t)
 }
 
 func TestSelfReferenceFailuresWitDirectDeclaration(t *testing.T) {
@@ -74,18 +74,20 @@ func TestCycleReferencesWithConfigDeclaration(t *testing.T) {
 }
 
 func TestCycleReferencesWithNewMethodDeclaration(t *testing.T) {
-	defer ExpectPanic(
-		t,
-		"Detected dependencies' cycle: userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]",
-		"Detected dependencies' cycle: roleProvider->userProvider->roleProvider [check 'userProvider' service] [check 'roleProvider' service]",
-	)
-
 	cont := NewRuntimeContainer()
 
-	cont.AddNewMethod("userProvider", mocks.NewUserProvider, "roleProvider")
-	cont.AddNewMethod("roleProvider", mocks.NewRoleProvider, "userProvider")
+	err := cont.AddNewMethod("userProvider", mocks.NewUserProvider, "roleProvider")
+	assertNoError(err, t)
 
-	cont.Check()
+	err = cont.AddNewMethod("roleProvider", mocks.NewRoleProvider, "userProvider")
+	assertNoError(err, t)
+
+	err = cont.Check()
+	ExpectErrorSubmatch(
+		err,
+		"userProvider->roleProvider->userProvider [check 'roleProvider' service] [check 'userProvider' service]",
+		t,
+	)
 }
 
 func TestCycleReferencesWithConstructor(t *testing.T) {

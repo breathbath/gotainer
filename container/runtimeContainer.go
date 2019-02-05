@@ -29,9 +29,14 @@ func NewRuntimeContainer() *RuntimeContainer {
 }
 
 //AddConstructor registers a Callback to create a Service identified by id, panics if id was already declared
-func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) {
-	rc.assertNoDuplicates(id)
+func (rc *RuntimeContainer) AddConstructor(id string, constructor Constructor) error {
+	err := rc.assertNoDuplicates(id)
+	if err != nil {
+		return err
+	}
 	rc.SetConstructor(id, constructor)
+
+	return nil
 }
 
 //SetConstructor adds a new service if it's not existing or overrides an existing one
@@ -40,19 +45,42 @@ func (rc *RuntimeContainer) SetConstructor(id string, constructor Constructor) {
 }
 
 //AddNewMethod converts a New Service method to a valid Callback Constr, panics if id already exists
-func (rc *RuntimeContainer) AddNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-	rc.assertNoDuplicates(id)
-	rc.SetNewMethod(id, typedConstructor, constructorArgumentNames...)
+func (rc *RuntimeContainer) AddNewMethod(
+	id string,
+	typedConstructor interface{},
+	constructorArgumentNames ...string,
+) error {
+	err := rc.assertNoDuplicates(id)
+	if err != nil {
+		return err
+	}
+
+	return rc.SetNewMethod(id, typedConstructor, constructorArgumentNames...)
 }
 
 //SetNewMethod overrides an existing service declaration or adds a new one if it doesn't exist
-func (rc *RuntimeContainer) SetNewMethod(id string, typedConstructor interface{}, constructorArgumentNames ...string) {
-	rc.newFuncConstructors[id] = convertNewMethodToNewFuncConstructor(rc, typedConstructor, constructorArgumentNames, id)
+func (rc *RuntimeContainer) SetNewMethod(
+	id string,
+	typedConstructor interface{},
+	constructorArgumentNames ...string,
+) error {
+	constrFunc, err := convertNewMethodToNewFuncConstructor(
+		rc,
+		typedConstructor,
+		constructorArgumentNames,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rc.newFuncConstructors[id] = constrFunc
+	return nil
 }
 
 //AddDependencyObserver registers Service that will receive Config it is interested in
-func (rc *RuntimeContainer) AddDependencyObserver(eventName, observerID string, observer interface{}) {
-	rc.eventsContainer.addDependencyObserver(eventName, observerID, observer)
+func (rc *RuntimeContainer) AddDependencyObserver(eventName, observerID string, observer interface{}) error {
+	return rc.eventsContainer.addDependencyObserver(eventName, observerID, observer)
 }
 
 //RegisterDependencyEvent notifies observers about added Config
@@ -88,7 +116,6 @@ func (rc *RuntimeContainer) ScanSecure(id string, isCached bool, dest interface{
 
 //Get fetches a Service in a return argument and panics if an error happens
 func (rc *RuntimeContainer) Get(id string, isCached bool) interface{} {
-
 	dependency, err := rc.GetSecure(id, isCached)
 	if err != nil {
 		panic(err)
@@ -141,7 +168,10 @@ func (rc *RuntimeContainer) GetSecure(id string, isCached bool) (interface{}, er
 
 	rc.cycleDetector.VisitAfterRecursion(id)
 
-	rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+	err = rc.eventsContainer.collectDependencyEventsForService(rc, id, service)
+	if err != nil {
+		return nil, err
+	}
 
 	rc.cache.Set(id, service)
 
@@ -156,16 +186,29 @@ func (rc *RuntimeContainer) resetCycleDetectorIfNeeded(curDependency string) {
 }
 
 //Check ensures that all runtime Config are created correctly
-func (rc *RuntimeContainer) Check() {
+func (rc *RuntimeContainer) Check() error {
+	errs := []error{}
+	var err error
 	for dependencyName := range rc.constructors {
-		rc.Get(dependencyName, false)
+		_, err = rc.GetSecure(dependencyName, false)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	for dependencyName := range rc.newFuncConstructors {
-		rc.Get(dependencyName, false)
+		_, err = rc.GetSecure(dependencyName, false)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	rc.CollectGarbage()
+	err = rc.CollectGarbage()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return mergeErrors(errs)
 }
 
 //Exists ensures that all runtime Config are created correctly
@@ -175,25 +218,24 @@ func (rc *RuntimeContainer) Exists(id string) bool {
 }
 
 //Merge allows to merge containers
-func (rc *RuntimeContainer) Merge(c MergeableContainer) {
+func (rc *RuntimeContainer) Merge(c MergeableContainer) error {
 	for keyConstructor, constr := range c.getConstructors() {
 		if _, ok := rc.constructors[keyConstructor]; ok {
-			conflictingErrorMessage := fmt.Sprintf(
+			return fmt.Errorf(
 				"Cannot merge containers because of non unique Service id '%s'",
 				keyConstructor,
 			)
-			panic(conflictingErrorMessage)
 		}
+
 		rc.constructors[keyConstructor] = constr
 	}
 
 	for keyConstructor, constr := range c.getNewFuncConstructors() {
 		if _, ok := rc.newFuncConstructors[keyConstructor]; ok {
-			conflictingErrorMessage := fmt.Sprintf(
+			return fmt.Errorf(
 				"Cannot merge containers because of non unique Service id '%s'",
 				keyConstructor,
 			)
-			panic(conflictingErrorMessage)
 		}
 		rc.newFuncConstructors[keyConstructor] = constr
 	}
@@ -202,7 +244,7 @@ func (rc *RuntimeContainer) Merge(c MergeableContainer) {
 		rc.cache[keyCache] = cache
 	}
 
-	rc.eventsContainer.merge(c.getEventsContainer())
+	return rc.eventsContainer.merge(c.getEventsContainer())
 }
 
 //AddGarbageCollectFunc registers a garbage collection function to destroy a service resources
@@ -255,10 +297,13 @@ func (rc *RuntimeContainer) getEventsContainer() EventsContainer {
 }
 
 //assertNoDuplicates checks if current dependency was not already declared
-func (rc *RuntimeContainer) assertNoDuplicates(id string) {
+func (rc *RuntimeContainer) assertNoDuplicates(id string) error {
 	_, constructorExists := rc.constructors[id]
 	_, newFuncExists := rc.newFuncConstructors[id]
-	if  constructorExists || newFuncExists{
-		panic(fmt.Sprintf("Detected duplicated dependency declaration '%s'", id))
+
+	if constructorExists || newFuncExists {
+		return fmt.Errorf("Detected duplicated dependency declaration '%s'", id)
 	}
+
+	return nil
 }

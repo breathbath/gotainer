@@ -40,13 +40,22 @@ func (rc RuntimeContainerBuilder) addTreeToContainer(tree Tree, c *RuntimeContai
 
 func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer) (err error) {
 	if node.NewFunc != nil {
-		rc.addNewFunc(node.ID, node.NewFunc, node.ServiceNames, container)
+		err = rc.addNewFunc(node.ID, node.NewFunc, node.ServiceNames, container)
+		if err != nil {
+			return err
+		}
 	} else if node.Constr != nil {
-		rc.addConstr(node.ID, node.Constr, container)
+		err = rc.addConstr(node.ID, node.Constr, container)
+		if err != nil {
+			return err
+		}
 	} else if node.Ev.Service != "" {
 		rc.addEvent(node.Ev.Name, node.Ev.Service, container)
 	} else if node.Ob.Name != "" {
-		rc.addObserver(node.Ob.Event, node.Ob.Name, node.Ob.Callback, container)
+		err = rc.addObserver(node.Ob.Event, node.Ob.Name, node.Ob.Callback, container)
+		if err != nil {
+			return err
+		}
 	}
 
 	if node.Parameters != nil {
@@ -69,20 +78,25 @@ func (rc RuntimeContainerBuilder) addNode(node Node, container *RuntimeContainer
 	return nil
 }
 
-func (rc RuntimeContainerBuilder) addNewFunc(serviceID string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) {
-	container.AddNewMethod(serviceID, newFunc, serviceNames...)
+func (rc RuntimeContainerBuilder) addNewFunc(serviceID string, newFunc interface{}, serviceNames []string, container *RuntimeContainer) error {
+	return container.AddNewMethod(serviceID, newFunc, serviceNames...)
 }
 
-func (rc RuntimeContainerBuilder) addConstr(serviceID string, constr Constructor, container *RuntimeContainer) {
-	container.AddConstructor(serviceID, constr)
+func (rc RuntimeContainerBuilder) addConstr(serviceID string, constr Constructor, container *RuntimeContainer) error {
+	return container.AddConstructor(serviceID, constr)
 }
 
 func (rc RuntimeContainerBuilder) addEvent(eventName, dependencyName string, container *RuntimeContainer) {
 	container.RegisterDependencyEvent(eventName, dependencyName)
 }
 
-func (rc RuntimeContainerBuilder) addObserver(eventName, observerID string, callback interface{}, container *RuntimeContainer) {
-	container.AddDependencyObserver(eventName, observerID, callback)
+func (rc RuntimeContainerBuilder) addObserver(
+	eventName,
+	observerID string,
+	callback interface{},
+	container *RuntimeContainer,
+) error {
+	return container.AddDependencyObserver(eventName, observerID, callback)
 }
 
 func (rc RuntimeContainerBuilder) addParameters(parameters map[string]interface{}, container *RuntimeContainer) error {

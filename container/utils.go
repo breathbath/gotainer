@@ -8,7 +8,11 @@ import (
 
 //copySourceVariableToDestinationVariable copies a dependency fetched from the container
 //to the pointer reference provided as dest in Scan or ScanNonCached of the container
-func copySourceVariableToDestinationVariable(createdDependency interface{}, destination interface{}, dependencyName string) error {
+func copySourceVariableToDestinationVariable(
+	createdDependency interface{},
+	destination interface{},
+	dependencyName string,
+) error {
 	destinationPointerValue := reflect.ValueOf(destination)
 	if destinationPointerValue.Kind() != reflect.Ptr {
 		return fmt.Errorf(
