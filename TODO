@@ -1,1 +1,0 @@
-2. Container should not construct dependencies when resolving events on build time
