@@ -12,6 +12,8 @@ You can define any go lang type as a service - a struct, a function (closure or 
 functions. You do it in a simple manner: you create a container instance and add your services to it under an unique alias.
 Further on you can fetch them by this key in any part of your application.
 
+For additional information and all method listings, see [the documentation](https://godoc.org/github.com/breathbath/gotainer/container)
+
 # How to install
 
         go get github.com/breathbath/gotainer/container
