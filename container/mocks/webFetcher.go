@@ -8,6 +8,10 @@ func NewWebFetcher() *WebFetcher {
 	return &WebFetcher{}
 }
 
+func NewWebFetcherWrongConstructor() *BookCreator {
+	return &BookCreator{}
+}
+
 //Fetch fake method to download something from a url
 func (wf *WebFetcher) Fetch(url string) string {
 	return "Fetched from " + url

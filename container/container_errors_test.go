@@ -178,3 +178,26 @@ func TestNonInitialisedPointerVariableDestination(t *testing.T) {
 	defer ExpectPanic(t, "Please provide an initialized variable rather than a non-initialised pointer variable [check 'static_files_url' service]")
 	cont.Scan("static_files_url", url)
 }
+
+func TestWrongReturnTypeOfNewFunc(t *testing.T) {
+	cont := NewRuntimeContainer()
+	err := cont.AddNewMethod("webFetcherCaller", mocks.NewWebfetcherCaller, "notWebFetcher")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = cont.AddNewMethod("notWebFetcher", mocks.NewWebFetcherWrongConstructor)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var webFetcherCaller mocks.WebfetcherCaller
+	err = cont.ScanSecure("webFetcherCaller", true, &webFetcherCaller)
+	AssertError(
+		err,
+		"Cannot use the provided dependency 'notWebFetcher' of type 'mocks.*BookCreator' as '*mocks.WebFetcher' in the return statement of constructor call [check 'notWebFetcher' service]",
+		t,
+	)
+}
