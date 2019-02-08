@@ -80,22 +80,27 @@ func validateConstructorReturnValues(reflectedConstructorFunc reflect.Value, ser
 	return nil
 }
 
-func assertConstructorArgumentsAreCompatible(
-	reflectedConstructorArgument reflect.Type,
-	reflectedContainerDependency reflect.Value,
-	dependencyName, serviceId string,
-) error {
-	if reflectedConstructorArgument.Kind() == reflect.Interface && reflectedContainerDependency.Type().Implements(reflectedConstructorArgument) {
-		return nil
+func assertCompatible(expectedDependency, providedDependency reflect.Type, dependencyName, serviceId string) error {
+	isCompat := false
+	if providedDependency == nil {
+		k := expectedDependency.Kind()
+		isCompat = k == reflect.Chan ||
+			k == reflect.Func ||
+			k == reflect.Interface ||
+			k == reflect.Map ||
+			k == reflect.Ptr ||
+			k == reflect.Slice
+
+	} else {
+		isCompat = providedDependency.AssignableTo(expectedDependency)
 	}
 
-	if reflectedConstructorArgument.Kind() != reflectedContainerDependency.Kind() ||
-		!reflectedConstructorArgument.ConvertibleTo(reflectedContainerDependency.Type()) {
+	if !isCompat {
 		errName := fmt.Sprintf(
 			"Cannot use the provided dependency '%s' of type '%s' as '%s' in the Constr function call [check '%s' service]",
 			dependencyName,
-			reflectedContainerDependency.Type(),
-			reflectedConstructorArgument,
+			providedDependency,
+			expectedDependency,
 			serviceId,
 		)
 		return errors.New(errName)

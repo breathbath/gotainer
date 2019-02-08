@@ -49,7 +49,7 @@ func CreateContainer() *RuntimeContainer {
 
 	runtimeContainer.AddNewMethod("book_link_provider", mocks.NewBookLinkProvider, "static_files_url", "book_finder_declared_statically")
 
-	runtimeContainer.AddNewMethod("web_fetcher", mocks.NewWebFetcher)
+	runtimeContainer.AddNewMethod("web_fetcher", mocks.NewWebFetcherPtr)
 	runtimeContainer.AddNewMethod("in_memory_cache", mocks.NewInMemoryCache)
 
 	runtimeContainer.AddNewMethod("book_downloader", mocks.NewBookDownloader, "in_memory_cache", "book_link_provider", "book_finder", "web_fetcher")

@@ -91,9 +91,9 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(
 
 		reflectedObserver := reflect.ValueOf(observer)
 		reflectedFirstResolverArgument := reflectedCustomObserverResolver.Type().In(0)
-		err := assertConstructorArgumentsAreCompatible(
+		err := assertCompatible(
 			reflectedFirstResolverArgument,
-			reflectedObserver,
+			reflectedObserver.Type(),
 			observerId,
 			observerId,
 		)
@@ -105,9 +105,9 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(
 
 		reflectedDependency := reflect.ValueOf(dependency)
 		reflectedSecondResolverArgument := reflectedCustomObserverResolver.Type().In(1)
-		err = assertConstructorArgumentsAreCompatible(
+		err = assertCompatible(
 			reflectedSecondResolverArgument,
-			reflectedDependency,
+			reflectedDependency.Type(),
 			eventName,
 			observerId,
 		)
@@ -159,9 +159,9 @@ func getValidFunctionArguments(
 				dependencyFromContainer,
 			)
 
-			err = assertConstructorArgumentsAreCompatible(
+			err = assertCompatible(
 				reflectedNewMethodArgument,
-				reflectedDependencyFromContainer,
+				reflectedDependencyFromContainer.Type(),
 				dependencyName,
 				serviceId,
 			)
@@ -198,9 +198,9 @@ func getValidFunctionArguments(
 			dependencyFromContainer,
 		)
 
-		err = assertConstructorArgumentsAreCompatible(
+		err = assertCompatible(
 			reflectedNewMethodArgument,
-			reflectedDependencyFromContainer,
+			reflect.TypeOf(dependencyFromContainer),
 			dependencyName,
 			serviceId,
 		)
