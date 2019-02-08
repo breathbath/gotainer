@@ -1,9 +1,14 @@
 package mocks
 
 type WebfetcherCaller struct {
-	webFetcher *WebFetcher
+	webFetcherPtr *WebFetcher
+	webFetcher    WebFetcher
 }
 
-func NewWebfetcherCaller(webFetcher *WebFetcher) *WebfetcherCaller {
+func NewWebfetcherCallerByPtr(webFetcher *WebFetcher) *WebfetcherCaller {
+	return &WebfetcherCaller{webFetcherPtr: webFetcher}
+}
+
+func NewWebfetcherCaller(webFetcher WebFetcher) *WebfetcherCaller {
 	return &WebfetcherCaller{webFetcher: webFetcher}
 }

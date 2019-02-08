@@ -179,25 +179,139 @@ func TestNonInitialisedPointerVariableDestination(t *testing.T) {
 	cont.Scan("static_files_url", url)
 }
 
-func TestWrongReturnTypeOfNewFunc(t *testing.T) {
-	cont := NewRuntimeContainer()
-	err := cont.AddNewMethod("webFetcherCaller", mocks.NewWebfetcherCaller, "notWebFetcher")
-	if err != nil {
-		t.Error(err)
-		return
-	}
+type compatibilityExpectation struct {
+	expectedErrText string
+	dependencyIdToFetch string
+}
 
-	err = cont.AddNewMethod("notWebFetcher", mocks.NewWebFetcherWrongConstructor)
-	if err != nil {
-		t.Error(err)
-		return
+func TestNewFuncArgumentsCompatibility(t *testing.T) {
+	cont := NewRuntimeContainer()
+
+	err := cont.AddNewMethod("notWebFetcher", mocks.NewWrongWebFetcher)
+	panicIfError(err)
+	err = cont.AddNewMethod("notWebFetcherAsPtr", mocks.NewWrongWebFetcherAsPtr)
+	panicIfError(err)
+	err = cont.AddNewMethod("notWebFetcherAsSlice", mocks.NewWrongWebFetcherAsSlice)
+	panicIfError(err)
+	err = cont.AddNewMethod("notWebFetcherAsChan", mocks.NewWrongWebFetcherAsChan)
+	panicIfError(err)
+	err = cont.AddNewMethod("notWebFetcherAsMap", mocks.NewWrongWebFetcherAsMap)
+	panicIfError(err)
+	err = cont.AddNewMethod("notWebFetcherAsInterface", mocks.NewWrongWebFetcherAsInterface)
+	panicIfError(err)
+
+	err = cont.AddNewMethod("webFetcherPtr", mocks.NewWebFetcherPtr)
+	panicIfError(err)
+	err = cont.AddNewMethod("webFetcher", mocks.NewWebFetcher)
+	panicIfError(err)
+
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndStructArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcher")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithStructArg", mocks.NewWebfetcherCaller, "notWebFetcher")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndPtrArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcherAsPtr")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithPtrArg", mocks.NewWebfetcherCaller, "notWebFetcherAsPtr")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndSliceArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcherAsSlice")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithSliceArg", mocks.NewWebfetcherCaller, "notWebFetcherAsSlice")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndChanArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcherAsChan")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithChanArg", mocks.NewWebfetcherCaller, "notWebFetcherAsChan")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndMapArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcherAsMap")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithMapArg", mocks.NewWebfetcherCaller, "notWebFetcherAsMap")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithConstrPtrAndInterfaceArg", mocks.NewWebfetcherCallerByPtr, "notWebFetcherAsInterface")
+	panicIfError(err)
+	err = cont.AddNewMethod("wrongFetcherCallerWithInterfaceArg", mocks.NewWebfetcherCaller, "notWebFetcherAsInterface")
+	panicIfError(err)
+
+	err = cont.AddNewMethod("correctFetcherCallerWithConstrPtr", mocks.NewWebfetcherCallerByPtr, "webFetcherPtr")
+	panicIfError(err)
+	err = cont.AddNewMethod("correctFetcherCaller", mocks.NewWebfetcherCaller, "webFetcher")
+	panicIfError(err)
+
+
+	expectations := []compatibilityExpectation{
+		{
+			"Cannot use the provided dependency 'notWebFetcher' of type 'mocks.BookCreator' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndStructArg' service]",
+				"wrongFetcherCallerWithConstrPtrAndStructArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcher' of type 'mocks.BookCreator' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithStructArg' service]",
+			"wrongFetcherCallerWithStructArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsPtr' of type '*mocks.BookCreator' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndPtrArg' service]",
+			"wrongFetcherCallerWithConstrPtrAndPtrArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsPtr' of type '*mocks.BookCreator' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithPtrArg' service]",
+			"wrongFetcherCallerWithPtrArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsSlice' of type '[]string' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndSliceArg' service]",
+			"wrongFetcherCallerWithConstrPtrAndSliceArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsSlice' of type '[]string' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithSliceArg' service]",
+			"wrongFetcherCallerWithSliceArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsChan' of type 'chan bool' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndChanArg' service]",
+			"wrongFetcherCallerWithConstrPtrAndChanArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsChan' of type 'chan bool' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithChanArg' service]",
+			"wrongFetcherCallerWithChanArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsMap' of type 'map[int]bool' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndMapArg' service]",
+			"wrongFetcherCallerWithConstrPtrAndMapArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsMap' of type 'map[int]bool' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithMapArg' service]",
+			"wrongFetcherCallerWithMapArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsInterface' of type 'int' as " +
+				"'*mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithConstrPtrAndInterfaceArg' service]",
+			"wrongFetcherCallerWithConstrPtrAndInterfaceArg",
+		},
+		{
+			"Cannot use the provided dependency 'notWebFetcherAsInterface' of type 'int' as " +
+				"'mocks.WebFetcher' in the Constr function call [check 'wrongFetcherCallerWithInterfaceArg' service]",
+			"wrongFetcherCallerWithInterfaceArg",
+		},
 	}
 
 	var webFetcherCaller mocks.WebfetcherCaller
-	err = cont.ScanSecure("webFetcherCaller", true, &webFetcherCaller)
-	AssertError(
-		err,
-		"Cannot use the provided dependency 'notWebFetcher' of type 'mocks.*BookCreator' as '*mocks.WebFetcher' in the return statement of constructor call [check 'notWebFetcher' service]",
-		t,
-	)
+	for _, compatExp := range expectations {
+		err = cont.ScanSecure(compatExp.dependencyIdToFetch, true, &webFetcherCaller)
+		AssertError(
+			err,
+			compatExp.expectedErrText,
+			t,
+		)
+	}
+
+	err = cont.ScanSecure("correctFetcherCallerWithConstrPtr", true, &webFetcherCaller)
+	assertNoError(err, t)
+
+	err = cont.ScanSecure("correctFetcherCaller", true, &webFetcherCaller)
+	assertNoError(err, t)
 }
