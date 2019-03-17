@@ -76,6 +76,12 @@ func AssertError(err error, expectedError string, t *testing.T) {
 	}
 
 	if err.Error() != expectedError {
-		t.Errorf("Error '%s' is expected but an '%s' error was returned", expectedError, err.Error())
+		t.Errorf(
+			`Unexpected error provided (-expected error, +actual error):
+- %s
++ %s`,
+			expectedError,
+			err.Error(),
+		)
 	}
 }
