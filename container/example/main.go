@@ -1,9 +1,9 @@
 package main
 
 import (
-	"example/cont"
-	"example/email"
 	"github.com/breathbath/gotainer/container"
+	"github.com/breathbath/gotainer/container/example/cont"
+	"github.com/breathbath/gotainer/container/example/email"
 )
 
 func main() {

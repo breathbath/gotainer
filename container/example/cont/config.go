@@ -2,8 +2,8 @@ package cont
 
 import (
 	"github.com/breathbath/gotainer/container"
-	"example/email"
-	"example/passwords"
+	"github.com/breathbath/gotainer/container/example/email"
+	"github.com/breathbath/gotainer/container/example/passwords"
 )
 
 func GetConfig() container.Tree {
@@ -23,6 +23,8 @@ func GetConfig() container.Tree {
 			NewFunc:      email.NewSmtpClient,
 			ServiceNames: container.Services{
 				"passwordManager", //with this we say to inject passwordManager into email.NewSmtpClient method
+				"fromEmail",
+				"fromName",
 			},
 		},
 	}
