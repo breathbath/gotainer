@@ -122,6 +122,59 @@ func wrapCallbackToProvideDependencyToServiceIntoServiceNotificationCallback(
 	}, nil
 }
 
+//getValidFunctionArgumentsForVariadicFunc does the same as getValidFunctionArguments but processes a variadic
+//constructor function
+func getValidFunctionArgumentsForVariadicFunc(
+	reflectedNewMethod reflect.Value,
+	newMethodArgumentNames []string,
+	container Container,
+	serviceId string,
+	isCached bool,
+) ([]reflect.Value, error) {
+	argumentsToCallNewMethod := []reflect.Value{}
+	constructorInputCount := reflectedNewMethod.Type().NumIn()
+	var i = 0
+	var errors []error
+	for _, dependencyName := range newMethodArgumentNames {
+		i++
+		dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
+		if err != nil {
+			return nil, err
+		}
+
+		reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
+
+		var reflectedNewMethodArgument reflect.Type
+		if i < constructorInputCount {
+			reflectedNewMethodArgument = reflectedNewMethod.Type().In(i - 1)
+		} else {
+			reflectedVariadicArgumentCollection := reflectedNewMethod.Type().In(constructorInputCount - 1)
+			reflectedNewMethodArgument = reflectedVariadicArgumentCollection.Elem()
+		}
+
+		reflectedDependencyFromContainer = replaceCompatibleNilDependency(
+			reflectedNewMethodArgument,
+			reflectedDependencyFromContainer,
+			dependencyFromContainer,
+		)
+
+		err = assertCompatible(
+			reflectedNewMethodArgument,
+			reflectedDependencyFromContainer.Type(),
+			dependencyName,
+			serviceId,
+		)
+		if err != nil {
+			errors = append(errors, err)
+			continue
+		}
+
+		argumentsToCallNewMethod = append(argumentsToCallNewMethod, reflectedDependencyFromContainer)
+	}
+
+	return argumentsToCallNewMethod, mergeErrors(errors)
+}
+
 //getValidFunctionArguments fetches Config by ids defined in newMethodArgumentNames and validates if they are convertable
 //to arguments of reflectedNewMethod which is a New method of a Service provided in the AddNewMethod of the container
 func getValidFunctionArguments(
@@ -132,48 +185,13 @@ func getValidFunctionArguments(
 	isCached bool,
 ) ([]reflect.Value, error) {
 	if reflectedNewMethod.Type().IsVariadic() {
-		argumentsToCallNewMethod := []reflect.Value{}
-		constructorInputCount := reflectedNewMethod.Type().NumIn()
-		var i = 0
-		var errors []error
-		for _, dependencyName := range newMethodArgumentNames {
-			i++
-			dependencyFromContainer, err := container.GetSecure(dependencyName, isCached)
-			if err != nil {
-				return nil, err
-			}
-
-			reflectedDependencyFromContainer := reflect.ValueOf(dependencyFromContainer)
-
-			var reflectedNewMethodArgument reflect.Type
-			if i < constructorInputCount {
-				reflectedNewMethodArgument = reflectedNewMethod.Type().In(i - 1)
-			} else {
-				reflectedVariadicArgumentCollection := reflectedNewMethod.Type().In(constructorInputCount - 1)
-				reflectedNewMethodArgument = reflectedVariadicArgumentCollection.Elem()
-			}
-
-			reflectedDependencyFromContainer = replaceCompatibleNilDependency(
-				reflectedNewMethodArgument,
-				reflectedDependencyFromContainer,
-				dependencyFromContainer,
-			)
-
-			err = assertCompatible(
-				reflectedNewMethodArgument,
-				reflectedDependencyFromContainer.Type(),
-				dependencyName,
-				serviceId,
-			)
-			if err != nil {
-				errors = append(errors, err)
-				continue
-			}
-
-			argumentsToCallNewMethod = append(argumentsToCallNewMethod, reflectedDependencyFromContainer)
-		}
-
-		return argumentsToCallNewMethod, mergeErrors(errors)
+		return getValidFunctionArgumentsForVariadicFunc(
+			reflectedNewMethod,
+			newMethodArgumentNames,
+			container,
+			serviceId,
+			isCached,
+		)
 	}
 
 	constructorInputCount := reflectedNewMethod.Type().NumIn()

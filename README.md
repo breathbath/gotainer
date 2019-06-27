@@ -5,6 +5,8 @@
 [![goreportcard for breathbath/gotainer](https://goreportcard.com/badge/github.com/breathbath/gotainer?v=1)](https://goreportcard.com/report/breathbath/gotainer)
 [![codecov for breathbath/gotainer](https://codecov.io/gh/breathbath/gotainer/branch/master/graph/badge.svg)](https://codecov.io/gh/breathbath/gotainer)
 [![Sourcegraph for breathbath/gotainer](https://sourcegraph.com/github.com/breathbath/gotainer/-/badge.svg)](https://sourcegraph.com/github.com/breathbath/gotainer?badge)
+[![HitCount](http://hits.dwyl.io/breathbath/gotainer.svg)](http://hits.dwyl.io/breathbath/gotainer)
+[![Maintainability](https://api.codeclimate.com/v1/badges/03a38b3b5b59522d579e/maintainability)](https://codeclimate.com/github/breathbath/gotainer/maintainability)
 
 This library helps to manage dependencies in your project by providing a centralised logic for initialising services.
 

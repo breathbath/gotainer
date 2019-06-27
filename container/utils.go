@@ -1,19 +1,12 @@
 package container
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 )
 
-//copySourceVariableToDestinationVariable copies a dependency fetched from the container
-//to the pointer reference provided as dest in Scan or ScanNonCached of the container
-func copySourceVariableToDestinationVariable(
-	createdDependency interface{},
-	destination interface{},
-	dependencyName string,
-) error {
-	destinationPointerValue := reflect.ValueOf(destination)
+//validateDestinationPointerValue checks if destination value is not a pointer or a nil
+func validateDestinationPointerValue(destinationPointerValue reflect.Value, dependencyName string) error {
 	if destinationPointerValue.Kind() != reflect.Ptr {
 		return fmt.Errorf(
 			"Please provide a pointer variable rather than a value [check '%s' service]",
@@ -25,6 +18,22 @@ func copySourceVariableToDestinationVariable(
 			"Please provide an initialized variable rather than a non-initialised pointer variable [check '%s' service]",
 			dependencyName,
 		)
+	}
+
+	return nil
+}
+
+//copySourceVariableToDestinationVariable copies a dependency fetched from the container
+//to the pointer reference provided as dest in Scan or ScanNonCached of the container
+func copySourceVariableToDestinationVariable(
+	createdDependency interface{},
+	destination interface{},
+	dependencyName string,
+) error {
+	destinationPointerValue := reflect.ValueOf(destination)
+	err := validateDestinationPointerValue(destinationPointerValue, dependencyName)
+	if err != nil {
+		return err
 	}
 
 	reflectedCreatedDependency := reflect.ValueOf(createdDependency)
@@ -42,15 +51,13 @@ func copySourceVariableToDestinationVariable(
 		return nil
 	}
 
-	errStr := fmt.Sprintf(
+	return fmt.Errorf(
 		"Cannot convert created value of type '%s' to expected destination value '%s' for createdDependency declaration %s [check '%s' service]",
 		reflectedCreatedDependency.Type().Name(),
 		destinationValue.Type().Name(),
 		dependencyName,
 		dependencyName,
 	)
-
-	return errors.New(errStr)
 }
 
 //sourceCanBeCopiedToDestination validates if we can copy the value received from the container to the defined dest pointer

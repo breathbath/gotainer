@@ -31,7 +31,6 @@ func validateNode(node Node, errCollection *[]error, tree Tree) {
 
 	if node.Ev.Name != "" || node.Ev.Service != "" {
 		validateEventDefinition(node, errCollection, tree)
-		return
 	}
 }
 
